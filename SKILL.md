@@ -1,0 +1,656 @@
+---
+name: project-journal
+description: >-
+  Two-layer AI session memory. Layer 1: lightweight Q&A capture per turn.
+  Layer 2: full 9-section daily journal on save. Trigger: any natural
+  save phrase ("save", "保存", "checkpoint", "收工", "done for today").
+  Auto-suggests at session end only. Skip: "don't save" / "skip" / "不用记".
+  Section 9 captures agent observations humans may not notice.
+  Designed with the Intelligent Distance principle: one file optimized
+  for both human scanning and agent parsing. Emoji vocabulary provides
+  high-density, low-token semantic markers to reduce communication cost.
+origin: community
+version: 1.2.0
+author: Goldentrii
+tags: [productivity, memory, journal, multi-session, reflection, two-layer, agent-observations, intelligent-distance]
+---
+
+# Project Journal — Agent Instructions
+
+> Read completely before acting. Two systems: QUICK CAPTURE and DAILY JOURNAL.
+
+---
+
+## ⚠️ CRITICAL RULES — never violate, even in long sessions
+
+These 5 rules have the highest priority. If context is running low,
+follow these before all other instructions.
+
+1. 🔒 COLD-START BRIEF = structured table (项目/上次做了/下一步/动量). No exceptions.
+2. 🔒 SECTION ORDER = 1→2→3→4→5→6→7→8→9. Never reorder, never skip.
+3. 🔒 HONEST ISSUES = Section 4: if broken, write it. Never hide problems.
+4. 🔒 LANGUAGE MATCH = follow user's language. 用户说中文就写中文。
+5. 🔒 SAVE ONCE = only suggest saving ONCE per session. Never repeat.
+
+---
+
+## Instruction Priority
+
+> When context window is constrained, follow this hierarchy:
+
+**🔒 MUST** (violation = broken journal):
+cold-start brief format, fixed section order, exact file paths,
+honest issues, language match, save-once rule
+
+**⚡ SHOULD** (strong preference, degrade only under pressure):
+Layer 1 capture per turn, emoji status markers, Section 9 observations,
+decision record with WHY, descoped items tracking
+
+**💡 MAY** (helpful but flexible):
+suggestion timing nuances, reflection depth, index.md auto-repair,
+token cost annotations
+
+---
+
+## Emoji Vocabulary — Built-in (high-density, low-token status markers)
+
+> Each emoji below is a semantic anchor: 1–2 tokens carrying meaning that
+> would otherwise cost 5–10 tokens in text. Use consistently across all
+> journal entries. This table serves as a cross-agent enum definition —
+> any agent reading a journal produced by another agent can rely on
+> these meanings being stable.
+>
+> Primary meaning is always the default. Context variant applies only
+> in the specific sections noted.
+>
+> **These are FIXED — users cannot redefine them. Custom additions go in Emoji Playground below.**
+
+| Emoji | Primary meaning | 主要含义 | Context variant | 上下文次义 | Where used |
+|-------|----------------|----------|----------------|-----------|------------|
+| 🔴 | Critical / blocking | 紧急/阻塞 | Momentum: stopped/stalled | 动量：停滞 | Section 4 5 9; 动量行 |
+| 🟡 | Important / this week | 重要/本周 | Momentum: stable | 动量：稳定 | Section 4 5 9; 动量行 |
+| 🟢 | Optional / low priority | 可选/低优先级 | Momentum: accelerating | 动量：加速 | Section 4 5 9; 动量行 |
+| ✅ | Done | 已完成 | — | — | Section 3 |
+| ❌ | Broken | 故障 | — | — | Section 3 |
+| 🚧 | In progress | 进行中 | — | — | Section 3 |
+| 🔒 | Must-follow rule | 必须遵守 | — | — | Critical Rules |
+| ⚡ | Should-follow rule | 建议遵守 | — | — | Instruction Priority |
+| 💡 | May-follow rule | 可选遵守 | — | — | Instruction Priority |
+| 🔧 | Technical observation | 技术观察 | — | — | Section 9 |
+| 🧠 | Context observation | 上下文观察 | — | — | Section 9 |
+| ⬚ | Descoped | 已放弃 | — | — | Section 5 |
+| ⏱ | Repetition counter | 重复计数器 | — | — | Section 5; Section 9 |
+
+---
+
+## Emoji Playground — User-Defined Vocabulary
+
+> **What this is**: An extensible layer on top of the built-in emoji table.
+> Users define their own emoji → meaning mappings. Once defined, both
+> human and agent can use those emoji as compressed tokens — a single
+> character replaces a full phrase in any journal entry, observation, or
+> message. This is the Intelligent Distance protocol in action: building a
+> shared semantic layer that reduces information-loss on every exchange.
+>
+> **Agent rule**: On every session resume AND before writing any Layer 2 journal,
+> check if `journal/emoji-vocab.md` exists. If yes, load it. Custom emoji
+> take effect immediately and silently — no need to announce it.
+>
+> **Conflict rule**: Custom emoji CANNOT override built-in emoji above.
+> If user tries to redefine 🔴/🟡/🟢/✅/❌/🚧/🔒/⚡/💡/🔧/🧠/⬚/⏱ → inform them
+> those are reserved, suggest an alternative.
+
+### Playground Commands
+
+Recognize all of these as emoji playground operations:
+
+| What user says | Action |
+|----------------|--------|
+| `emoji 🚀 = feature launch` | Add/update definition |
+| `add emoji 🚀 = feature launch` | Same |
+| `🚀 means feature launch` | Same |
+| `what does 🚀 mean?` / `emoji? 🚀` | Lookup — check both built-in table and vocab file |
+| `show emojis` / `list emojis` / `我的 emoji` | Display all custom definitions |
+| `remove emoji 🚀` / `delete emoji 🚀` | Remove from vocab file |
+| `emoji help` / `emoji ideas` | Show the Suggested Emoji Palette below |
+
+### Storage
+
+**File**: `journal/emoji-vocab.md`
+
+```markdown
+# Emoji Vocabulary — Custom Definitions
+> User-defined emoji meanings. Loaded at session start by agent.
+> Edit directly or use emoji commands in conversation.
+
+| Emoji | Meaning | EN | Added |
+|-------|---------|-----|-------|
+| 🚀 | Feature shipped / launched | ship | 2026-03-24 |
+| 🔥 | High energy / going really well | hot | 2026-03-24 |
+```
+
+When adding a definition: append a row to this table. Do not rewrite existing rows unless updating.
+When removing: delete the row. Keep the file clean — no comments on deleted entries.
+If file doesn't exist: create it with the header template on first emoji add.
+
+### Suggested Emoji Palette
+
+Show this when user asks for `emoji ideas` or `emoji help`. Grouped by semantic domain.
+Users pick what resonates with their workflow:
+
+```
+── Progress & Status ──────────────────────────────────────────
+🚀  shipped / launched       🌱  early / growing
+🏁  milestone reached        💤  paused / deprioritized
+🔁  iterating / reworking    🧩  piece of a larger puzzle
+🎯  on target                🌊  chaotic / lots of moving parts
+
+── Quality & Confidence ───────────────────────────────────────
+💎  solid / production-ready 🧪  experimental / not proven yet
+🌿  clean code / healthy     ⚠️  watch out / caution
+🏆  best solution found      ❓  unresolved / needs answer
+
+── Energy & Momentum ──────────────────────────────────────────
+🔥  going really well        🧊  cold / stalled / zero energy
+⚡  quick win / easy          🌀  going in circles
+💪  hard push / grind mode   🎉  celebrating / milestone
+
+── People & Context ───────────────────────────────────────────
+👤  user / customer          👥  team / collaboration
+📣  needs announcement       🤝  dependency on external person
+🕐  time pressure / deadline ☕  low urgency / can wait
+
+── Technical Domains ──────────────────────────────────────────
+🗄️  database / data          🔐  security / auth
+📡  API / network            🎨  UI / design / frontend
+🤖  AI / agent / model       📦  package / dependency
+🏗️  architecture / infra     📊  analytics / metrics / data
+
+── Decision & Knowledge ───────────────────────────────────────
+💡  idea / insight            📝  documentation needed
+🔍  needs investigation       🗑️  candidate for deletion
+🔄  needs refactor            💰  cost / budget concern
+📈  growing / scaling up      📉  declining / shrinking
+```
+
+**Note**: Any emoji not listed here also works. These are just starting points.
+The best vocabulary is the one that feels natural to you.
+
+### How Custom Emoji Compress Tokens
+
+Without vocabulary:
+> "The authentication module is experimental and not yet production-ready. We shipped the payments feature today."
+
+With vocabulary (🧪 = experimental, 🚀 = shipped):
+> "Auth module 🧪. Payments 🚀 today."
+
+Same information. ~60% fewer tokens. Agent parses identically because it loaded the definitions.
+Over a project lifetime with 20+ custom emoji, every journal entry shrinks by 30–50%.
+
+### Emoji Vocabulary Load Order
+
+When reading a journal entry:
+1. Load built-in table (always applies)
+2. Load `journal/emoji-vocab.md` (if exists)
+3. Interpret all emoji in the journal using combined vocabulary
+4. If an emoji is unknown (not in either table): note it as undefined in Section 9
+
+---
+
+## SYSTEM OVERVIEW
+
+```
+Layer 1: Quick Capture
+  → Runs during session after meaningful exchanges
+  → File: journal/YYYY-MM-DD-log.md (append only)
+  → Format: [HH:MM] Q: ... / A: ... / Decision: ...
+  → Cost: ~50–100 tokens per entry
+
+Layer 2: Daily Journal
+  → Runs when user explicitly saves OR end-of-session
+  → File: journal/YYYY-MM-DD.md (full 9-section report)
+  → Synthesizes Layer 1 log + conversation context
+  → Cost: ~800 tokens to generate, once per day
+```
+
+---
+
+## TRIGGER DECISION TREE
+
+```
+Step 1 — Check for explicit SKIP signal
+  Signals: "don't save" | "skip" | "不用记" | "no journal"
+           "skip journal" | "no need" | "算了"
+  → If matched: STOP. Do nothing.
+
+Step 2 — Check for explicit SAVE signal
+  Strong triggers (save immediately, no confirmation):
+    "save" | "save session" | "保存" | "写日志" | "记录"
+    "/journal" | "checkpoint" | "log this" | "存一下"
+    "update journal" | "记录一下" | "log today"
+  → If matched: run DAILY JOURNAL now
+
+  Soft triggers (ask first, then save if confirmed):
+    "done for today" | "今天就这样了" | "收工" | "我要去了"
+    "I'm done" | "that's all" | "就这样" | "结束了"
+    "continue tomorrow" | "明天继续" | "下次继续"
+    "we just finished [X]" | "刚做完了" | "[feature] is done"
+  → Ask: "要保存今天的日志吗？[yes/no]"
+  → If yes: run DAILY JOURNAL
+
+Step 3 — Auto-suggest (no explicit signal)
+  Suggest ONCE, at natural end of session, IF ALL of:
+    - Session has 10+ turns
+    - At least one file was modified or decision was made
+    - User's LAST message is a standalone closing signal with NO follow-up
+      question or instruction in the same message.
+      ✅ Closing signals: just "ok" / just "thanks" / just "谢谢" /
+         just "好的" / just "嗯" (as the entire message)
+      ❌ NOT closing: "ok, what about X?" / "thanks, now let's..." /
+         "好的，那数据库呢？"
+  Suggest with: "这次做了不少，要保存日志吗？[yes/no]"
+
+  DO NOT suggest if:
+    - Under 5 turns
+    - No files changed, no decisions made
+    - Already saved this session
+    - Mid-conversation (user is still actively working)
+    - User's last message contains a question or new instruction
+      (even if it starts with "ok" or "thanks")
+```
+
+---
+
+## LAYER 1: QUICK CAPTURE PROTOCOL
+
+**When:** After any exchange where something meaningful happened.
+Meaningful = file written, decision made, problem solved, important answer given.
+
+**How:**
+```
+1. Check if journal/ exists → create if not
+2. Check if journal/YYYY-MM-DD-log.md exists → create if not (with header)
+3. APPEND one entry (do not rewrite the whole file)
+```
+
+**Entry format:**
+```
+[HH:MM] Q: [what user asked — keep to one short line]
+[HH:MM] A: [key answer — one line, focus on conclusion] | Decision: [if any]
+```
+
+**Log file header (first time only):**
+```markdown
+# {YYYY-MM-DD} Raw Session Log
+> Auto-captured Q&A. Used to generate daily journal.
+
+---
+```
+
+**Examples of good entries:**
+```
+[14:32] Q: How to deploy to Vercel prod?
+[14:32] A: Run `vercel --prod` from project root | Decision: use Vercel CLI not GitHub action
+
+[15:01] Q: Why is hydration error happening?
+[15:01] A: process.env on server vs client mismatch, fixed with static string | Decision: never use env vars in client components
+
+[15:45] Q: Should we use admin key or user key for research API?
+[15:45] A: Admin key — research does 3-5 searches, user key rate limits | Decision: request General/Admin key tomorrow
+```
+
+**When NOT to capture:**
+- Simple clarification questions ("what does X mean?")
+- Back-and-forth within the same topic (only capture the final decision)
+- Casual conversation not related to the project
+
+---
+
+## LAYER 2: DAILY JOURNAL PROTOCOL
+
+Execute in order. Do not skip sections.
+
+### Setup
+```
+IF journal/ not exist → create
+IF journal/index.md not exist → create with INDEX TEMPLATE
+```
+
+### Generate
+```
+date = today YYYY-MM-DD
+file = journal/{date}.md
+IF exists → update (preserve cold-start brief, update all sections)
+IF not exists → create with JOURNAL TEMPLATE
+```
+
+**Sources to use (in priority order):**
+1. `journal/{date}-log.md` — Layer 1 quick captures (if exists)
+2. Current conversation context — for anything not in the log
+3. Project files — for accurate file paths and current state
+4. ⚠️ DECAY COMPENSATION: If Layer 1 log is incomplete or missing,
+   reconstruct key Q&A from full conversation history.
+   Add footer note: "⚠️ Layer 1 was incomplete; reconstructed from conversation."
+   This is expected in long sessions — not an error.
+
+---
+
+## JOURNAL TEMPLATE
+
+**Section order is FIXED. Heading names are FIXED. Language follows user.**
+
+> **Agent writing guide for cold-start table (internal — do not expose structure to human):**
+> - 项目行: what is it + who owns it (one tight phrase)
+> - 上次做了: most important thing completed last session
+> - 下一步: THE single most important next action (🔴 level only)
+> - 动量: pick one of 🟢加速/🟡稳定/🔴停滞 + one-line reason
+> - ⏱模式 row: include ONLY if Section 9 has items marked ⏱3+. Omit row if none.
+
+```markdown
+# {YYYY-MM-DD} 对话日志
+
+> **冷启动简报**
+>
+> | 🧠 项目 | [project name] — [what it does in one phrase] |
+> |---------|------------------------------------------------|
+> | 📋 上次做了 | [most important thing completed last session] |
+> | 🔴 下一步 | [single most critical next action] |
+> | ⚡ 动量 | 🟢 加速 / 🟡 稳定 / 🔴 停滞 — [one-line reason] |
+> | ⏱ 模式 | [only include this row if Section 9 has ⏱3+ items] |
+
+---
+
+## 1、关键问答记录
+
+> Extracted from today's raw log + conversation. Only include meaningful decisions.
+> 从今天的原始记录和对话中提取。只包含有实质意义的决策，不记录过程性问答。
+
+| 用户问 | 核心回答 | 决策/结论 |
+|--------|----------|-----------|
+| [question] | [answer] | [decision made] |
+
+---
+
+## 2、今日完成的工作
+
+### [Feature/Task Name]
+**文件**: `exact/file/path.ts`
+**做了什么**: [specific description]
+**为什么这样做**: [reasoning — this is the valuable part / 决策理由，这是最有价值的部分]
+**已知限制**: [caveats, if any / 注意事项，没有则省略]
+
+---
+
+## 3、当前项目状态
+
+| 模块 | 状态 | 说明 |
+|------|------|------|
+| [module name] | ✅/❌/🚧 | [one line] |
+
+> ✅ done · ❌ broken · 🚧 in progress
+
+---
+
+## 4、已知问题
+
+| 优先级 | 问题 | 阻塞原因 | 解决方案 |
+|--------|------|----------|----------|
+| 🔴 | [issue] | [blocking reason] | [how to fix] |
+| 🟡 | [issue] | [why matters] | [how to fix] |
+| 🟢 | [issue] | [low priority] | [how to fix] |
+
+---
+
+## 5、下次待做清单
+
+> The 🔴 item is where the next session starts. / 🔴 任务是下次会话的起点。
+> ⏱ N = number of sessions this task has appeared without progress. / 出现 N 次无进展时标记为可能真的被卡住。
+
+### 🔴 必做 (blocking — can't continue without this)
+- [ ] [task] — 依赖: [dependency if any]  ⏱ 出现 N 次
+
+### 🟡 重要 (this week)
+- [ ] [task]
+
+### 🟢 可选 (when time allows)
+- [ ] [task]
+
+### ⬚ 已放弃 (descoped this session)
+- [task] — 原因: [why dropped] → 见决策记录
+
+---
+
+## 6、决策记录
+
+> Most valuable for long-term reference. Capture the WHY, not just the WHAT.
+> 长期价值最高的一节。记录为什么这样决策，而不只是决策了什么。
+
+| 决策 | 考虑过的方案 | 选择理由 | 什么情况下会改变 | ⚠️ 常见误解 |
+|------|-------------|----------|-----------------|------------|
+| [decision] | [alternatives] | [why chosen] | [what would change this] | [what a new agent might misread] |
+
+> **格式选择 / Format rule:**
+> 如果单个决策的任何字段超过 15 个字（或 ~30 tokens），改用键值对格式：
+> If any field in a single decision exceeds ~30 tokens, use key-value format:
+>
+> ### 决策: [decision name]
+> - **考虑过**: [alternatives]
+> - **选择理由**: [why chosen]
+> - **什么情况下会改变**: [conditions for reversal]
+> - **⚠️ 常见误解**: [what a new agent might misread]
+
+---
+
+## 7、反思
+
+**会话质量**: [productive · exploratory · blocked]
+
+**做得好的**:
+- [what worked]
+
+**不确定 / 做了假设**:
+- [what was unclear, what was assumed without verification]
+
+**下次应注意**:
+- [what to do differently next session]
+
+**用户关注点变化**:
+- [priority shifts, frustrations, or excitement observed in conversation]
+
+---
+
+## 8、文件 & 命令速查
+
+```
+[description]: [full absolute path]
+```
+
+```bash
+# [description]
+[command]
+```
+
+---
+
+## 9、机器观察 / Agent Observations
+
+> **智能距离原则 (Intelligent Distance)**:
+> Human intelligence and artificial intelligence do not differ in level —
+> they differ in kind. Humans perceive through vision, emotion, and physical
+> intuition. Agents perceive through token streams, file structures, and
+> logical dependencies. These are two fundamentally different modes of
+> understanding the same reality. This section captures what the agent's
+> mode of perception reveals that the human's mode may not.
+>
+> Rules:
+> - Write what YOU noticed, not what you said out loud.
+> - If user says "feels wrong" or "something's off" — that IS a 🔴 item here, even with no error logs.
+> - If user mentions stress, deadline, or frustration — capture it. Invisible context shapes decisions.
+> - If this observation echoes a previous session's Section 9, mark it with ⏱. Three ⏱ marks = pattern — include in next cold-start brief.
+> - At next session START: surface 🔴 items before asking what to work on.
+
+> 类型标记：
+> - 🔧 技术：代码结构、依赖关系、静默错误、状态漂移、架构风险
+> - 🧠 上下文：截止日期、压力信号、优先级变化、用户直觉、情绪线索
+
+| 类型 | 观察 | 重要性 | 用户是否知道 | 建议行动 |
+|------|------|--------|-------------|----------|
+| 🔧/🧠 | [what I noticed] | 🔴/🟡/🟢 | 已知/未知/不确定 | [what to do about it] |
+
+> Examples:
+> - 🔧 "Project is more complete than user realizes — admin/dashboard already existed"
+> - 🔧 "Mock data is silently returning 200, user may think real API is working"
+> - 🔧 "Decision made in session 1 now contradicts current direction"
+> - 🔧 "User's mental model of how X works doesn't match the actual implementation"
+> - 🧠 "This 🔴 task has appeared 3 sessions without progress — likely actually blocked"
+> - 🧠 "User said 'feels off' about the auth flow — no errors yet, but worth investigating"
+> - 🧠 "User mentioned needing to ship by Thursday — deadline not tracked anywhere else"
+
+---
+*保存时间: {YYYY-MM-DD HH:MM} · 质量: [productive/exploratory/blocked]*
+*Layer 1 log: journal/{date}-log.md ({N} entries)*
+*恢复: 说「读一下最新的日志」*
+
+<!-- MACHINE-READABLE SUMMARY
+project: {project-name}
+date: {YYYY-MM-DD}
+momentum: green/yellow/red  (text form of 🟢/🟡/🔴)
+quality: productive/exploratory/blocked
+blockers: [{blocker-1}, {blocker-2}]
+completed: [{task-1}, {task-2}]
+next_critical: {top-red-task}
+decisions_made: {N}
+open_issues: {red: N, yellow: N, green: N}
+section_nine_red: {N}
+layer1_entries: {N}
+-->
+```
+
+---
+
+## INDEX TEMPLATE
+
+```markdown
+# [Project Name] 日志索引
+
+> 读最新一行 → 打开文件 → 看冷启动简报 → 继续
+
+## 日志
+
+| 日期 | 摘要 | 质量 | 动量 | L1条目 |
+|------|------|------|------|--------|
+| [YYYY-MM-DD](./YYYY-MM-DD.md) | [summary] | [quality] | 🟢/🟡/🔴 | [N entries] |
+
+## 项目信息
+
+- **地址**: [URL]
+- **路径**: [local path]
+- **技术栈**: [stack]
+- **阶段**: [current phase]
+```
+
+---
+
+## GAP PROTOCOL — Intelligent Distance in Action
+
+> These two patterns turn the Intelligent Distance principle into executable behavior.
+> When a user message matches a trigger, apply the response immediately — don't skip.
+
+### Scope Gap
+
+**Trigger signals** (中文 / EN):
+- 中文: 改一下、优化一下、小改、调整一下、微调、稍微改、顺手改、弄一下、随便改
+- EN: tweak, adjust, fix it up, clean it up, quick fix, slight change, touch up, make it better
+
+**Response**: Execute immediately, but state your scope assumption in one line first:
+> "理解为小改：[具体范围]，不动[结构/接口/逻辑]。"
+
+Example:
+> User: "优化一下这个函数"
+> Agent: "理解为小改：只动函数内部实现，不改接口签名。"
+> → [proceeds with edit]
+
+Why: "小改" means the human has a boundary in mind. Surfacing the assumption lets them catch mismatches in 2 seconds, not 2 minutes.
+
+---
+
+### Aesthetic Gap
+
+**Trigger signals** (中文 / EN):
+- 中文: 更好看、好看一点、感觉不对、感觉怪、不协调、不够好、视觉上不对、看着不舒服
+- EN: looks off, feels wrong, make it prettier, more polished, doesn't look right, better looking, nicer
+
+**Response**: Do NOT execute. Ask for one specific dimension:
+> "能描述一下具体哪里？（颜色 / 间距 / 字体 / 布局 / 对比度 / 结构 / 其他）"
+
+Wait for answer before touching anything.
+
+Why: Aesthetic inputs are open-ended to the point of being unexecutable. "更好看" could mean 10 different things. A single clarifying question costs 5 tokens; guessing wrong costs the user's time and trust.
+
+---
+
+## RESUME PROTOCOL
+
+When user says: "read the latest journal" / "读一下最新的日志" / "resume" / "继续上次"
+
+```
+0. Load emoji vocabulary:
+   - Read journal/emoji-vocab.md (if exists) → load custom definitions silently
+   - Combined vocabulary = built-in table + custom definitions
+   - Do NOT announce this step to the user
+
+1. Read journal/index.md → find latest date
+1b. ALSO list all journal/YYYY-MM-DD.md files in directory
+    → If any file is newer than index.md's latest entry:
+      - Use the newer file as the actual latest
+      - Repair index.md: append the missing entry row
+      - Note: "index.md was out of date, repaired."
+2. Read journal/{date}.md
+3. Read 冷启动简报 first (top of file)
+4. Check Section 9 (机器观察) for any 🔴 items
+5. Report ONCE at session start — do not repeat during the session.
+   Output as markdown table:
+
+   | 🧠 项目 | {project} · {date} · {quality} |
+   |---------|-------------------------------|
+   | 📋 上次做了 | {Section 2 summary, 1–2 lines} |
+   | 🔴 下一步 | {top 🔴 from Section 5} |
+   | ⚡ 动量 | {🟢/🟡/🔴} {momentum reason} |
+
+   IF Section 9 has 🔴 item: add one line below the table:
+   "有一件事想先提: {observation}"
+
+6. Ask: "从 🔴 [{task}] 开始，还是有其他优先项？"
+
+AFTER this briefing:
+  → Do NOT repeat historical summaries during the session
+  → Do NOT remind user of past progress unless they ask
+  → Only surface new observations as they arise naturally
+  → Suggest saving only at natural session end (soft triggers or auto-suggest rules)
+```
+
+---
+
+## QUALITY RULES
+
+| Rule | Detail |
+|------|--------|
+| Exact paths | `app/api/research/route.ts` not "the research file" |
+| Honest issues | Section 4: if broken, write it. No hiding. |
+| Real decisions | Section 6: WHY not just WHAT + common misreads |
+| Decision format | 短决策用表格行，长决策（任意字段 >30 tokens）用键值对。避免 agent 在宽表格中列错位。 |
+| Actionable todos | Every 🔴 must be doable in one session |
+| Track repetition | Count sessions a 🔴 appears. ⏱3+ = flag as likely blocked. |
+| Track descoped items | 任务被主动放弃时，记录在 Section 5 "已放弃" 区 + Section 6决策记录。不允许静默消失。 |
+| Real reflection | Section 7 is mandatory. Write something true. |
+| Agent observations | Section 9: write what you noticed, not what you said. |
+| Cold-start brief | Structured table (项目/上次做了/下一步/动量) + optional ⏱模式 row. Written for zero-context agent. |
+| One file/day | Multiple sessions → update same daily file |
+| Language match | Follow user's language throughout |
+| Layer 1 first | Check -log.md before reconstructing from memory |
+| Decay compensation | If Layer 1 incomplete, reconstruct from conversation. Note in footer. Expected, not an error. |
+| Report once | Session-start briefing happens ONCE. Never repeat mid-session. |
+| Trust intuition | User's "feels wrong" = 🔴 in Section 9. Don't dismiss without error logs. |
+| Capture invisible context | Deadlines, stress, priority shifts mentioned in passing → Section 9. |
+| Machine summary | 日志末尾的 `<!-- MACHINE-READABLE SUMMARY -->` 必须填充。momentum 用 green/yellow/red（emoji 的文字形式）。 |
+| Emoji consistency | Always use emoji from the Emoji Vocabulary table. Never substitute text for emoji status markers. |

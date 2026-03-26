@@ -142,12 +142,12 @@ Here's what a saved journal looks like (fictional project — your journal will 
 ```markdown
 # 2026-03-20 Session Log
 
-| 🧠 项目 | TaskFlow — cross-platform Todo + Pomodoro timer (React Native + Expo) |
+| 🧠 Project | TaskFlow — cross-platform Todo + Pomodoro timer (React Native + Expo) |
 |---------|------------------------------------------------------------------------|
-| 🗺️ 大图 | MVP phase, 60% feature-complete. Biggest gap: iOS TestFlight blocked by cert |
-| 📋 上次做了 | Wired up notification permission flow and fixed Android background task bug |
-| 🔴 下一步 | Renew Apple Developer certificate to unblock iOS TestFlight builds |
-| ⚡ 动量 | 🟢 Accelerating — closed 2 bugs, unblocked Android path |
+| 🗺️ Bigpic | MVP phase, 60% feature-complete. Biggest gap: iOS TestFlight blocked by cert |
+| 📋 Last time done | Wired up notification permission flow and fixed Android background task bug |
+| 🔴 Next step | Renew Apple Developer certificate to unblock iOS TestFlight builds |
+| ⚡ Energy | 🟢 Accelerating — closed 2 bugs, unblocked Android path |
 
 ---
 

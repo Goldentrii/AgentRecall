@@ -15,7 +15,7 @@ const execFileAsync = promisify(execFile);
 // Constants
 // ---------------------------------------------------------------------------
 
-const VERSION = "2.1.1";
+const VERSION = "2.2.0";
 const JOURNAL_ROOT =
   process.env.AGENT_RECALL_ROOT ||
   path.join(os.homedir(), ".agent-recall");

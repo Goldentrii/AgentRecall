@@ -1,6 +1,6 @@
 {
   "name": "agent-recall-mcp",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "AI session memory with Think-Execute-Reflect quality loops — give your agent a brain that survives every session",
   "type": "module",
   "main": "dist/index.js",
@@ -8,7 +8,8 @@
     "agent-recall-mcp": "dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js', '755')\"",

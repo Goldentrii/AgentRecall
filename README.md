@@ -229,3 +229,149 @@ Built by [tongwu](https://github.com/Goldentrii) at [NovadaLabs](https://github.
 MIT — *Concept & Design: [tongwu](https://github.com/Goldentrii)*
 
 **Memory solves forgetting. AgentRecall solves misunderstanding.**
+
+---
+
+---
+
+# agent-recall-mcp（中文文档）
+
+> 给你的 AI 智能体一个跨会话记忆的大脑。
+
+---
+
+## 智能距离（Intelligent Distance）— 核心理念
+
+> *「人类智能与 AI 智能之间的差距是结构性的、永久的 — 不是一个临时的技术问题。」*
+
+人类是「生出来的」（具身经验、情感、生存压力）。机器是「造出来的」（规则、确定性）。AI 是「训练出来的」（数据上的统计共现）。三种不同的认知起源，产生三种不同的理解方式。这个差距不会随 AI 进步而消失 — 因为差异在于**起源**，而非能力。
+
+```
+人类说：「全部点击」
+AI 理解：「点击主要的」
+差距：「全部」≠「主要的」
+
+人类说：「做完意味着完全一样」
+AI 认为：「差不多就行」
+差距：「完全一样」≠「差不多」
+
+人类给出：零散、非线性的指令
+AI 选择：一条指令，忽略其余
+差距：点与点之间的逻辑关联丢失了
+```
+
+**AgentRecall 不试图缩小这个差距，而是构建一个协议来导航它。**
+
+---
+
+## AgentRecall 如何弥合差距
+
+| 智能距离缺口 | AgentRecall 工具 | 功能 |
+|-------------|-----------------|------|
+| 智能体忘了人类昨天说的话 | `journal_read` + `journal_cold_start` | 三层记忆 + 缓存感知冷启动 |
+| 智能体误解人类意图 | `alignment_check` | 记录置信度 + 假设 → 人类在工作开始前纠正 |
+| 智能体与之前的决策矛盾 | `nudge` | 检测矛盾 → 在造成损失前提出 |
+| 智能体说「完成了」但人类不同意 | Think-Execute-Reflect 循环 | 用数字评分（「建了 11 页 35 个标签」），不用感觉（「做得不错」）|
+| 智能体凭想象构建，而非基于数据 | `journal_state` (JSON) | agent 间结构化交接 — 毫秒级，无需解析散文 |
+| 智能体重复同样的错误 | 失败记录 + `context_synthesize` | 跨会话模式检测 → 提升为永久记忆 |
+| 下一个 agent 从零开始 | `journal_cold_start` (v3) | 热/温/冷缓存 — 加载 3 个文件而非 28 个 |
+
+**记忆解决遗忘，AgentRecall 解决误解。**
+
+---
+
+## 快速开始
+
+```bash
+# Claude Code
+claude mcp add agent-recall -- npx -y agent-recall-mcp
+
+# Cursor — .cursor/mcp.json
+{ "mcpServers": { "agent-recall": { "command": "npx", "args": ["-y", "agent-recall-mcp"] } } }
+
+# VS Code — .vscode/mcp.json
+{ "servers": { "agent-recall": { "command": "npx", "args": ["-y", "agent-recall-mcp"] } } }
+```
+
+---
+
+## 12 个工具
+
+### 会话记忆（6 个）
+
+| 工具 | 功能 |
+|------|------|
+| `journal_read` | 按日期读取日志，支持章节过滤 |
+| `journal_write` | 追加或替换今日日志 |
+| `journal_capture` | 轻量问答捕获 |
+| `journal_list` | 列出最近日志 |
+| `journal_search` | 全文搜索 |
+| `journal_projects` | 列出所有项目 |
+
+### v3 架构（3 个）— 新增
+
+| 工具 | 功能 |
+|------|------|
+| `journal_state` | **JSON 状态层** — 结构化读写，agent 间毫秒级交接 |
+| `journal_cold_start` | **缓存感知冷启动** — 热（0-1天）/ 温（2-7天）/ 冷（7天+） |
+| `journal_archive` | **归档旧条目** — 移至 archive/，保留单行摘要 |
+
+### 对齐 & 合成（3 个）
+
+| 工具 | 功能 |
+|------|------|
+| `alignment_check` | 记录理解度、置信度、假设、人类纠正 |
+| `nudge` | 检测矛盾，主动提问 |
+| `context_synthesize` | 跨会话合成：目标演变、决策历史、模式检测 |
+
+---
+
+## 三层记忆 + v3 缓存
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ L1: 工作记忆    [每轮, ~50 tok]     「发生了什么」        │
+│     ↓ 合成为                                             │
+│ L2: 情景记忆    [每日日志, ~800 tok] 「这意味着什么」      │
+│     ↓ 合成为                                             │
+│ L3: 语义记忆    [跨会话]            「跨会话的真相」       │
+│     （矛盾检测 + 目标演变追踪）                           │
+├─────────────────────────────────────────────────────────┤
+│ v3: JSON 状态层  [每会话]  agent 间结构化数据              │
+├─────────────────────────────────────────────────────────┤
+│ v3: 缓存层       热（0-1天）→ 温（2-7天）→ 冷（7天+）    │
+│     journal_cold_start → 加载 3 个文件而非 28 个          │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Think-Execute-Reflect 质量循环
+
+```
+🧠 THINK    → 方法对吗？做了调研吗？
+⚡ EXECUTE  → 实际 vs 计划？（用数字，不用感觉）
+🔍 REFLECT  → 5 维度质量评分 + 智能距离差距分析
+🔄 FEEDBACK → 循环（需要迭代）或 退出（质量足够）
+```
+
+**Reflect 步骤显式测量智能距离：**
+- 用户意图 vs 我的理解
+- 两者之间的差距（或「无 — 已对齐」）
+- 下次如何缩小差距
+
+---
+
+## 反馈 & 贡献
+
+由 [tongwu](https://github.com/Goldentrii) 在 [NovadaLabs](https://github.com/NovadaLabs) 构建。
+
+**我们期待你的反馈：**
+- 邮箱：tongwu0824@gmail.com
+- GitHub Issues：[NovadaLabs/AgentRecall](https://github.com/NovadaLabs/AgentRecall/issues)
+
+---
+
+## 许可证
+
+MIT — [tongwu](https://github.com/Goldentrii) @ [NovadaLabs](https://github.com/NovadaLabs)

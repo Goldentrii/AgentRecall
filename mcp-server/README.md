@@ -21,6 +21,33 @@
 
 ---
 
+## The Core Idea: Intelligent Distance
+
+> *"The gap between human intelligence and AI intelligence is structural and permanent — not a temporary technology problem."*
+
+Humans and AI think differently. Not better or worse — **differently**. Humans are born (embodied experience), machines are made (rules), AI is trained (statistical patterns). This gap — **Intelligent Distance** — means:
+
+- When a human says "click all," the agent hears "click the main things"
+- When a human says "done means identical," the agent thinks "close enough"
+- When a human gives scattered instructions, the agent picks one and ignores the rest
+
+**AgentRecall doesn't try to close this gap. It builds a protocol to navigate it.**
+
+Every tool in AgentRecall serves this purpose:
+
+| Gap | Tool | How it helps |
+|-----|------|-------------|
+| Agent forgets what human said yesterday | `journal_read` + `journal_cold_start` | Persistent memory across sessions |
+| Agent misunderstands human intent | `alignment_check` | Records confidence + assumptions → human corrects before work starts |
+| Agent contradicts a prior decision | `nudge` | Detects contradiction → surfaces it before damage is done |
+| Agent says "done" but human disagrees | Think-Execute-Reflect loop | Structured quality scoring with COUNTS, not feelings |
+| Agent builds from imagination, not data | `journal_state` (JSON) | Transfers structured state agent-to-agent — no prose interpretation |
+| Agent repeats the same mistake | Failures section + `context_synthesize` | Patterns detected across sessions → promoted to permanent memory |
+
+**Memory solves forgetting. AgentRecall solves misunderstanding.**
+
+---
+
 ## Why AgentRecall?
 
 | Problem | How AgentRecall Solves It |
@@ -304,11 +331,19 @@ claude mcp add agent-recall -- npx -y agent-recall-mcp
 
 ---
 
-## 核心理念
+## 核心理念：智能距离（Intelligent Distance）
+
+> *「人类智能与 AI 智能之间的差距是结构性的、永久的 — 不是一个临时的技术问题。」*
+
+人类是「生出来的」（具身经验）、机器是「造出来的」（规则驱动）、AI 是「训练出来的」（统计共现）。三种不同的认知基底，产生三种不同的理解方式。这个差距就是**智能距离**。
+
+AgentRecall 不试图缩小这个差距，而是构建一个**协议**来最小化信息损失：
+- `alignment_check` — 在开始工作前记录理解和假设，让人类纠正
+- `nudge` — 检测到矛盾时主动提问，而不是默默构建错误的东西
+- Think-Execute-Reflect — 用数字而非感觉评估质量（「建了 11 页 35 个标签」而非「做得不错」）
+- `journal_state` (JSON) — agent 间用结构化数据交接，不靠散文解析
 
 **记忆解决遗忘，AgentRecall 解决误解。**
-
-人类和 AI 之间的理解差距是结构性的 — 人类说话前后矛盾、碎片化、含糊不清；AI 则以完美的自信构建错误的东西。AgentRecall 通过对齐检测、矛盾提醒和跨会话合成来弥合这个「智能距离」。
 
 ---
 

@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/agent-recall-mcp"><img src="https://img.shields.io/npm/v/agent-recall-mcp?style=flat-square&color=5D34F2" alt="npm"></a>
   <a href="https://github.com/NovadaLabs/AgentRecall/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
-  <img src="https://img.shields.io/badge/MCP-12_tools-orange?style=flat-square" alt="Tools">
+  <img src="https://img.shields.io/badge/MCP-14_tools-orange?style=flat-square" alt="Tools">
   <img src="https://img.shields.io/badge/protocol-Intelligent_Distance-5B2D8E?style=flat-square" alt="Protocol">
   <img src="https://img.shields.io/badge/cloud-zero-blue?style=flat-square" alt="Zero Cloud">
 </p>
@@ -85,7 +85,7 @@ Say **"save"** to journal. Say **"read the latest journal"** to resume.
 
 ---
 
-## 12 MCP Tools
+## 14 MCP Tools
 
 ### Session Memory (6 tools)
 
@@ -105,6 +105,13 @@ Say **"save"** to journal. Say **"read the latest journal"** to resume.
 | `journal_state` | **JSON state layer** — structured read/write for agent-to-agent handoffs (milliseconds, no prose) |
 | `journal_cold_start` | **Cache-aware cold start** — HOT (today+yesterday), WARM (2-7 days), COLD (7+ days) |
 | `journal_archive` | **Archive old entries** — moves to `archive/` with summaries, keeps journal/ clean |
+
+### Knowledge Loop (2 tools) — NEW
+
+| Tool | Purpose |
+|------|---------|
+| `knowledge_write` | **Write permanent lessons** — structured entries by category (extraction, build, verification, tools, general). Agents learn from past mistakes. |
+| `knowledge_read` | **Read past lessons** — filter by project, category, or search query. Agents check what went wrong before starting work. |
 
 ### Alignment & Synthesis (3 tools)
 
@@ -295,7 +302,7 @@ claude mcp add agent-recall -- npx -y agent-recall-mcp
 
 ---
 
-## 12 个工具
+## 14 个工具
 
 ### 会话记忆（6 个）
 
@@ -315,6 +322,13 @@ claude mcp add agent-recall -- npx -y agent-recall-mcp
 | `journal_state` | **JSON 状态层** — 结构化读写，agent 间毫秒级交接 |
 | `journal_cold_start` | **缓存感知冷启动** — 热（0-1天）/ 温（2-7天）/ 冷（7天+） |
 | `journal_archive` | **归档旧条目** — 移至 archive/，保留单行摘要 |
+
+### 知识循环（2 个）— 新增
+
+| 工具 | 功能 |
+|------|------|
+| `knowledge_write` | **写入永久教训** — 按类别结构化记录（提取、构建、验证、工具、通用）。Agent 从过去的错误中学习。 |
+| `knowledge_read` | **读取过去教训** — 按项目、类别或搜索词过滤。Agent 开始工作前检查过去的失败。 |
 
 ### 对齐 & 合成（3 个）
 

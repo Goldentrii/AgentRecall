@@ -74,6 +74,8 @@ if (args.includes("--list-tools")) {
     { name: "journal_state", description: "Layer 1 JSON state: read/write structured session data (v3)" },
     { name: "journal_cold_start", description: "Cache-aware cold start: hot/warm/cold entries (v3)" },
     { name: "journal_archive", description: "Archive old entries to cold storage (v3)" },
+    { name: "knowledge_write", description: "Write a structured lesson to a category-specific knowledge file" },
+    { name: "knowledge_read", description: "Read lessons from knowledge files, optionally filtered by project/category/query" },
   ];
   process.stdout.write(JSON.stringify(tools, null, 2) + "\n");
   process.exit(0);
@@ -1436,6 +1438,196 @@ server.registerTool("journal_archive", {
         summaries,
         archive_dir: archiveDir,
       }),
+    }],
+  };
+});
+
+// ---------------------------------------------------------------------------
+// Tool: knowledge_write — Structured lesson recording
+// ---------------------------------------------------------------------------
+
+server.registerTool("knowledge_write", {
+  title: "Write Knowledge Lesson",
+  description:
+    "Write a structured lesson to a category-specific knowledge file. " +
+    "Different from journal_write (which logs what happened today) — knowledge_write records permanent lessons learned.",
+  inputSchema: {
+    project: z.string().describe("Project name for scoping"),
+    category: z
+      .enum(["extraction", "build", "verification", "tools", "general"])
+      .describe("Knowledge category"),
+    title: z.string().describe("Short title of the lesson"),
+    what_happened: z.string().describe("What went wrong or right"),
+    root_cause: z.string().describe("Why it happened"),
+    fix: z.string().describe("How to prevent/fix it"),
+    severity: z
+      .enum(["critical", "important", "minor"])
+      .default("important")
+      .describe("Severity level of the lesson"),
+  },
+}, async ({ project, category, title, what_happened, root_cause, fix, severity }) => {
+  const baseDir = process.env.AGENT_RECALL_DIR || path.join(os.homedir(), ".agent-recall");
+  const safe = project.replace(/[^a-zA-Z0-9_\-\.]/g, "-");
+  const knowledgeDir = path.join(baseDir, "projects", safe, "knowledge");
+  ensureDir(knowledgeDir);
+
+  const filePath = path.join(knowledgeDir, `${category}.md`);
+  const date = todayISO();
+
+  let entry = `### ${title} (${project}, ${date})\n`;
+  entry += `- **What happened:** ${what_happened}\n`;
+  entry += `- **Root cause:** ${root_cause}\n`;
+  entry += `- **Fix:** ${fix}\n`;
+  entry += `- **Severity:** ${severity}\n\n`;
+
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, `# Knowledge — ${category}\n\n${entry}`, "utf-8");
+  } else {
+    fs.appendFileSync(filePath, entry, "utf-8");
+  }
+
+  return {
+    content: [{
+      type: "text" as const,
+      text: JSON.stringify({
+        success: true,
+        project,
+        category,
+        title,
+        severity,
+        file: filePath,
+      }),
+    }],
+  };
+});
+
+// ---------------------------------------------------------------------------
+// Tool: knowledge_read — Read lessons from knowledge files
+// ---------------------------------------------------------------------------
+
+server.registerTool("knowledge_read", {
+  title: "Read Knowledge Lessons",
+  description:
+    "Read lessons from knowledge files. Used before starting work to learn from past mistakes. " +
+    "Can filter by project, category, and search query.",
+  inputSchema: {
+    project: z.string().optional().describe("Specific project, or omit for all projects"),
+    category: z
+      .enum(["extraction", "build", "verification", "tools", "general"])
+      .optional()
+      .describe("Specific category, or omit for all categories"),
+    query: z.string().optional().describe("Search term to filter lessons (case-insensitive)"),
+  },
+}, async ({ project, category, query }) => {
+  const baseDir = process.env.AGENT_RECALL_DIR || path.join(os.homedir(), ".agent-recall");
+  const projectsDir = path.join(baseDir, "projects");
+
+  // Determine which project directories to scan
+  let projectDirs: Array<{ slug: string; dir: string }> = [];
+
+  if (project) {
+    const safe = project.replace(/[^a-zA-Z0-9_\-\.]/g, "-");
+    const dir = path.join(projectsDir, safe, "knowledge");
+    if (fs.existsSync(dir)) {
+      projectDirs.push({ slug: safe, dir });
+    }
+  } else {
+    // Scan all projects
+    if (fs.existsSync(projectsDir)) {
+      try {
+        const entries = fs.readdirSync(projectsDir);
+        for (const entry of entries) {
+          const dir = path.join(projectsDir, entry, "knowledge");
+          if (fs.existsSync(dir)) {
+            projectDirs.push({ slug: entry, dir });
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  if (projectDirs.length === 0) {
+    return {
+      content: [{
+        type: "text" as const,
+        text: "No knowledge entries found. Start logging lessons with knowledge_write.",
+      }],
+    };
+  }
+
+  // Determine which category files to read
+  const categories = category
+    ? [`${category}.md`]
+    : ["extraction.md", "build.md", "verification.md", "tools.md", "general.md"];
+
+  let combined = "";
+
+  for (const pd of projectDirs) {
+    for (const catFile of categories) {
+      const filePath = path.join(pd.dir, catFile);
+      if (!fs.existsSync(filePath)) continue;
+      const content = fs.readFileSync(filePath, "utf-8");
+
+      if (query) {
+        // Filter to entries containing the query (case-insensitive)
+        const queryLower = query.toLowerCase();
+        const lines = content.split("\n");
+        const matchedEntries: string[] = [];
+        let currentEntry: string[] = [];
+
+        for (const line of lines) {
+          if (line.startsWith("### ")) {
+            // Check if previous entry matched
+            if (currentEntry.length > 0) {
+              const entryText = currentEntry.join("\n");
+              if (entryText.toLowerCase().includes(queryLower)) {
+                matchedEntries.push(entryText);
+              }
+            }
+            currentEntry = [line];
+          } else {
+            currentEntry.push(line);
+          }
+        }
+        // Check last entry
+        if (currentEntry.length > 0) {
+          const entryText = currentEntry.join("\n");
+          if (entryText.toLowerCase().includes(queryLower)) {
+            matchedEntries.push(entryText);
+          }
+        }
+
+        if (matchedEntries.length > 0) {
+          combined += `\n## ${pd.slug} / ${catFile.replace(".md", "")}\n\n`;
+          combined += matchedEntries.join("\n") + "\n";
+        }
+      } else {
+        combined += `\n## ${pd.slug} / ${catFile.replace(".md", "")}\n\n`;
+        combined += content + "\n";
+      }
+    }
+  }
+
+  if (!combined.trim()) {
+    return {
+      content: [{
+        type: "text" as const,
+        text: "No knowledge entries found. Start logging lessons with knowledge_write.",
+      }],
+    };
+  }
+
+  // Truncate to 5000 chars if too long
+  if (combined.length > 5000) {
+    combined = combined.slice(0, 5000) + "\n\n...(truncated, narrow your query for more)";
+  }
+
+  return {
+    content: [{
+      type: "text" as const,
+      text: combined,
     }],
   };
 });

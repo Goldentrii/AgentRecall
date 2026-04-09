@@ -1,0 +1,86 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { resolveProject } from "../storage/project.js";
+import { palaceDir } from "../storage/paths.js";
+import { ensureDir } from "../storage/fs-utils.js";
+import { ensurePalaceInitialized, createRoom, roomExists, updateRoomMeta } from "../palace/rooms.js";
+import { fanOut } from "../palace/fan-out.js";
+import { updatePalaceIndex } from "../palace/index-manager.js";
+import { generateFrontmatter } from "../palace/obsidian.js";
+import type { Importance } from "../types.js";
+import { appendToLog } from "../palace/log.js";
+
+export interface PalaceWriteInput {
+  room: string;
+  topic?: string;
+  content: string;
+  connections?: string[];
+  importance?: Importance;
+  project?: string;
+}
+
+export interface PalaceWriteResult {
+  success: boolean;
+  room: string;
+  topic: string;
+  project: string;
+  importance: Importance;
+  fan_out: { updated_rooms: string[]; new_edges: number };
+}
+
+export async function palaceWrite(input: PalaceWriteInput): Promise<PalaceWriteResult> {
+  const slug = await resolveProject(input.project);
+  const importance: Importance = input.importance ?? "medium";
+  ensurePalaceInitialized(slug);
+
+  if (!roomExists(slug, input.room)) {
+    createRoom(slug, input.room, input.room.charAt(0).toUpperCase() + input.room.slice(1), `Auto-created room for ${input.room}`, []);
+  }
+
+  const pd = palaceDir(slug);
+  const targetTopic = input.topic ?? "README";
+  const targetFile = path.join(pd, "rooms", input.room, `${targetTopic}.md`);
+  ensureDir(path.dirname(targetFile));
+
+  const timestamp = new Date().toISOString();
+
+  if (targetTopic === "README") {
+    let existing = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, "utf-8") : "";
+    const entry = `\n### ${timestamp.slice(0, 10)} — ${importance}\n\n${input.content}\n`;
+
+    if (existing.includes("## Memories")) {
+      const idx = existing.indexOf("## Memories");
+      const afterHeader = existing.indexOf("\n", idx);
+      existing = existing.slice(0, afterHeader + 1) + entry + existing.slice(afterHeader + 1);
+    } else {
+      existing += `\n## Memories\n${entry}`;
+    }
+
+    fs.writeFileSync(targetFile, existing, "utf-8");
+  } else {
+    if (fs.existsSync(targetFile)) {
+      const existing = fs.readFileSync(targetFile, "utf-8");
+      const entry = `\n### ${timestamp.slice(0, 10)} — ${importance}\n\n${input.content}\n`;
+      fs.writeFileSync(targetFile, existing + entry, "utf-8");
+    } else {
+      const fm = generateFrontmatter({ room: input.room, topic: targetTopic, created: timestamp, importance });
+      fs.writeFileSync(targetFile, `${fm}# ${input.room} / ${targetTopic}\n\n${input.content}\n`, "utf-8");
+    }
+  }
+
+  updateRoomMeta(slug, input.room, { updated: timestamp });
+
+  const fanOutResult = fanOut(slug, input.room, targetTopic, input.content, input.connections ?? [], importance);
+  updatePalaceIndex(slug);
+
+  appendToLog(slug, "palace_write", { room: input.room, topic: targetTopic, importance, fan_out_rooms: fanOutResult.updatedRooms });
+
+  return {
+    success: true,
+    room: input.room,
+    topic: targetTopic,
+    project: slug,
+    importance,
+    fan_out: { updated_rooms: fanOutResult.updatedRooms, new_edges: fanOutResult.newEdges },
+  };
+}

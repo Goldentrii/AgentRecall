@@ -127,3 +127,27 @@ export { extractSection, appendToSection } from "./helpers/sections.js";
 
 // Helpers — rollup
 export { isoWeek, weekKey, groupByWeek, synthesizeWeek } from "./helpers/rollup.js";
+
+// Tool logic functions (extracted from MCP tool handlers)
+export { journalRead, type JournalReadInput, type JournalReadResult } from "./tools-logic/journal-read.js";
+export { journalWrite, type JournalWriteInput, type JournalWriteResult } from "./tools-logic/journal-write.js";
+export { journalCapture, type JournalCaptureInput, type JournalCaptureResult } from "./tools-logic/journal-capture.js";
+export { journalList, type JournalListInput, type JournalListResult } from "./tools-logic/journal-list.js";
+export { journalProjects, type JournalProjectsResult } from "./tools-logic/journal-projects.js";
+export { journalSearch, type JournalSearchInput, type JournalSearchResult } from "./tools-logic/journal-search.js";
+export { journalState, stateFilePath, readState, type JournalStateInput, type JournalStateResult } from "./tools-logic/journal-state.js";
+export { journalColdStart, type JournalColdStartInput, type JournalColdStartResult } from "./tools-logic/journal-cold-start.js";
+export { journalArchive, type JournalArchiveInput, type JournalArchiveResult } from "./tools-logic/journal-archive.js";
+export { journalRollup, type JournalRollupInput, type JournalRollupResult } from "./tools-logic/journal-rollup.js";
+export { alignmentCheck, type AlignmentCheckInput, type AlignmentCheckResult } from "./tools-logic/alignment-check.js";
+export { nudge, type NudgeInput, type NudgeResult } from "./tools-logic/nudge.js";
+export { contextSynthesize, type ContextSynthesizeInput, type ContextSynthesizeResult } from "./tools-logic/context-synthesize.js";
+export { knowledgeWrite, type KnowledgeWriteInput, type KnowledgeWriteResult } from "./tools-logic/knowledge-write.js";
+export { knowledgeRead, type KnowledgeReadInput } from "./tools-logic/knowledge-read.js";
+export { palaceRead, type PalaceReadInput, type PalaceReadResult } from "./tools-logic/palace-read.js";
+export { palaceWrite, type PalaceWriteInput, type PalaceWriteResult } from "./tools-logic/palace-write.js";
+export { palaceWalk, roomSummary, readRoomContent, type PalaceWalkInput, type PalaceWalkResult } from "./tools-logic/palace-walk.js";
+export { palaceLint, type PalaceLintInput, type PalaceLintResult, type LintIssue } from "./tools-logic/palace-lint.js";
+export { palaceSearch, type PalaceSearchInput, type PalaceSearchResult } from "./tools-logic/palace-search.js";
+export { awarenessUpdate, type AwarenessUpdateInput, type AwarenessUpdateResult } from "./tools-logic/awareness-update.js";
+export { recallInsight, type RecallInsightInput, type RecallInsightResult } from "./tools-logic/recall-insight.js";

@@ -52,6 +52,9 @@ claude mcp add agent-recall -- npx -y agent-recall-mcp
 
 # Windsurf — ~/.codeium/windsurf/mcp_config.json
 { "mcpServers": { "agent-recall": { "command": "npx", "args": ["-y", "agent-recall-mcp"] } } }
+
+# Codex — ~/.codex/config.toml (or .codex/config.toml for project-scoped)
+codex mcp add agent-recall -- npx -y agent-recall-mcp
 ```
 
 **Skill (Claude Code only):**
@@ -204,6 +207,7 @@ The gap between human intent and agent understanding is structural — different
 | Agent | MCP | Skill | Notes |
 |-------|:---:|:-----:|-------|
 | Claude Code | ✅ | ✅ | Full support — MCP + SKILL.md |
+| OpenAI Codex | ✅ | — | `codex mcp add` — config.toml |
 | Cursor | ✅ | ⚡ | MCP via .cursor/mcp.json |
 | VS Code (Copilot) | ✅ | — | MCP via .vscode/mcp.json |
 | Windsurf | ✅ | ⚡ | MCP via mcp_config.json |
@@ -281,6 +285,9 @@ claude mcp add agent-recall -- npx -y agent-recall-mcp
 
 # VS Code — .vscode/mcp.json
 { "servers": { "agent-recall": { "command": "npx", "args": ["-y", "agent-recall-mcp"] } } }
+
+# Codex — ~/.codex/config.toml
+codex mcp add agent-recall -- npx -y agent-recall-mcp
 ```
 
 **Claude Code 技能安装：**

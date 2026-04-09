@@ -1,3 +1,17 @@
+/**
+ * Palace-first cold start.
+ *
+ * v3.4 change: loads palace context FIRST (curated, compressed),
+ * journal entries SECOND (raw, temporal). This reduces cold-start
+ * token cost from ~800 to ~200 for typical sessions.
+ *
+ * Return structure:
+ *   palace_context: identity + awareness summary + top 3 rooms (~200 tokens)
+ *   hot: today/yesterday journals (full state + brief)
+ *   warm: 2-7 day journals (count only — details are in palace)
+ *   cold: older journals (count only)
+ */
+
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import * as fs from "node:fs";
@@ -7,14 +21,20 @@ import { listJournalFiles } from "../helpers/journal-files.js";
 import { extractSection } from "../helpers/sections.js";
 import { todayISO } from "../storage/fs-utils.js";
 import { readState } from "./journal-state.js";
+import { palaceDir } from "../storage/paths.js";
+import { ensurePalaceInitialized, listRooms } from "../palace/rooms.js";
+import { readAwareness, readAwarenessState } from "../palace/awareness.js";
 import type { SessionState } from "../types.js";
 
 export function register(server: McpServer): void {
   server.registerTool("journal_cold_start", {
-    title: "Cold Start Brief (Cache-Aware)",
+    title: "Cold Start Brief (Palace-First)",
     description:
-      "Returns a cache-aware cold-start package. HOT: today + yesterday (full). " +
-      "WARM: 2-7 days (summaries only). COLD: older (count only). " +
+      "Returns a palace-first cold-start package. " +
+      "Loads curated palace context (~200 tokens) FIRST, then recent journals. " +
+      "HOT: today + yesterday (full state + brief). " +
+      "WARM: 2-7 days (count only — content already promoted to palace). " +
+      "COLD: older (count only). " +
       "Designed for minimal context consumption on session start.",
     inputSchema: {
       project: z.string().default("auto"),
@@ -24,8 +44,58 @@ export function register(server: McpServer): void {
     const entries = listJournalFiles(slug);
     const _today = todayISO();
 
+    // ── Palace context (curated, compressed) ────────────────────────
+
+    let palaceContext: {
+      identity: string | null;
+      awareness_summary: string | null;
+      top_rooms: Array<{ slug: string; name: string; salience: number; description: string }>;
+      insight_count: number;
+    } = {
+      identity: null,
+      awareness_summary: null,
+      top_rooms: [],
+      insight_count: 0,
+    };
+
+    try {
+      ensurePalaceInitialized(slug);
+      const pd = palaceDir(slug);
+
+      // Identity (~50 tokens)
+      const identityPath = path.join(pd, "identity.md");
+      if (fs.existsSync(identityPath)) {
+        palaceContext.identity = fs.readFileSync(identityPath, "utf-8").slice(0, 500);
+      }
+
+      // Awareness summary (~100 tokens — first 15 lines)
+      const awarenessContent = readAwareness();
+      if (awarenessContent) {
+        palaceContext.awareness_summary = awarenessContent.split("\n").slice(0, 15).join("\n");
+      }
+
+      // Top 3 rooms by salience (~50 tokens)
+      const rooms = listRooms(slug);
+      palaceContext.top_rooms = rooms.slice(0, 3).map(r => ({
+        slug: r.slug,
+        name: r.name,
+        salience: Math.round(r.salience * 100) / 100,
+        description: r.description,
+      }));
+
+      // Insight count
+      const state = readAwarenessState();
+      if (state) {
+        palaceContext.insight_count = state.topInsights.length;
+      }
+    } catch {
+      // Palace not initialized — that's fine, journal-only cold start
+    }
+
+    // ── Journal entries (raw, temporal) ──────────────────────────────
+
     const hot: Array<{ date: string; state: SessionState | null; brief: string | null }> = [];
-    const warm: Array<{ date: string; brief: string | null }> = [];
+    let warmCount = 0;
     let coldCount = 0;
 
     for (const entry of entries) {
@@ -33,6 +103,7 @@ export function register(server: McpServer): void {
       const ageDays = ageMs / (1000 * 60 * 60 * 24);
 
       if (ageDays <= 1.5) {
+        // HOT: full state + brief (today/yesterday only)
         const state = readState(slug, entry.date);
         const fullPath = path.join(entry.dir, entry.file);
         const stats = fs.statSync(fullPath);
@@ -45,13 +116,10 @@ export function register(server: McpServer): void {
           brief: extractSection(content, "brief"),
         });
       } else if (ageDays <= 7) {
-        const fullPath = path.join(entry.dir, entry.file);
-        const content = fs.readFileSync(fullPath, "utf-8").slice(0, 2048);
-        warm.push({
-          date: entry.date,
-          brief: extractSection(content, "brief"),
-        });
+        // WARM: count only — content should already be in palace rooms
+        warmCount++;
       } else {
+        // COLD: count only
         coldCount++;
       }
     }
@@ -61,13 +129,14 @@ export function register(server: McpServer): void {
         type: "text" as const,
         text: JSON.stringify({
           project: slug,
+          palace_context: palaceContext,
           cache: {
             hot: { count: hot.length, entries: hot },
-            warm: { count: warm.length, entries: warm },
+            warm: { count: warmCount },
             cold: { count: coldCount },
           },
           total_entries: entries.length,
-          tip: "HOT entries have full state. WARM have briefs only. Use journal_read for COLD entries.",
+          tip: "Palace context is your curated starting point. HOT entries have today's raw state. Use journal_read for older entries.",
         }),
       }],
     };

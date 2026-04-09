@@ -1,8 +1,8 @@
 ---
-description: "AgentRecall full save — journal + palace + awareness + insights in one shot. End-of-session brain dump."
+description: "AgentRecall full save — journal + palace + awareness + insights + verification. End-of-session brain dump."
 ---
 
-# /agsave — AgentRecall Full Save
+# /arsave — AgentRecall Full Save (v3.4)
 
 One command to save everything. No long prompts needed.
 
@@ -13,7 +13,9 @@ Runs the complete AgentRecall end-of-session flow:
 1. **Journal** — write today's daily journal entry (10-section format)
 2. **Palace** — consolidate key decisions, goals, blockers into palace rooms
 3. **Awareness** — extract 1-3 insights from this session into the compounding system
-4. **Git** — push to GitHub if user has configured it
+4. **Verify** — check that promotion actually happened (don't trust the consolidation blindly)
+5. **Compact** — auto-trigger weekly roll-up if old journals are piling up
+6. **Git** — push to GitHub if user has configured it
 
 ## Process
 
@@ -57,13 +59,50 @@ Call `awareness_update` with:
 - **trajectory** (optional): where is the work heading?
 - **blind_spots** (optional): what might matter but hasn't been explored?
 
-### Step 5: Confirm and offer git push
+### Step 5: Verify promotion (NEW in v3.4)
+
+After consolidation, verify that content actually made it to palace rooms. Don't trust that Step 3 worked — check:
+
+1. **Decisions check**: Call `palace_read(room="architecture")`. If today's decisions are NOT present, extract them from the journal and call `palace_write(room="architecture", ...)` directly.
+
+2. **Blockers check**: Call `palace_read(room="blockers")`. If current blockers are NOT reflected, update the room.
+
+3. **Awareness check**: Call `awareness_update` result. If 0 insights were added and the session was productive, go back and extract at least 1.
+
+Report the verification result:
+```
+✅ Promotion verified:
+  - architecture: 2 decisions promoted
+  - blockers: up to date
+  - awareness: 1 insight added (total: 7)
+```
+
+Or if gaps found:
+```
+⚠️ Promotion gap detected — fixing:
+  - architecture: decisions missing → extracted and written
+  - blockers: stale → updated
+  - awareness: 0 insights → extracted 1
+```
+
+### Step 6: Auto-compact journals (NEW in v3.4)
+
+Call `journal_rollup(dry_run=true)` to check if old journals should be condensed.
+
+If the dry run shows weeks that can be rolled up:
+- Tell the user: "Found N weeks of old journals that can be condensed into weekly summaries."
+- Ask: "Roll up? [yes/no]"
+- If yes, call `journal_rollup(dry_run=false)`
+
+### Step 7: Confirm and offer git push
 
 Show the user a summary:
 ```
 ✅ Journal: written (YYYY-MM-DD.md)
 ✅ Palace: consolidated (N rooms updated)
 ✅ Awareness: N insights added (M total)
+✅ Promotion: verified (or gaps fixed)
+✅ Compact: N weeks rolled up (or "no old journals to compact")
 ```
 
 Then ask: "Push to GitHub?" If yes, run:
@@ -74,6 +113,7 @@ cd <project-root> && git add -A && git commit -m "session: YYYY-MM-DD <one-line 
 ## Important Rules
 
 - **Be honest in the journal.** If something broke, write it. If nothing got done, say so.
+- **Verify, don't trust.** Step 5 exists because agents skip consolidation or do it superficially. Check the result.
 - **Insights should be reusable.** "Fixed a bug" is not an insight. "API returns null when session expires — always null-check auth responses" is an insight.
 - **Don't over-save.** 1-3 insights per session is plenty. Quality over quantity.
 - **Match the user's language.** If the session was in Chinese, write in Chinese.

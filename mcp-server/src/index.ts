@@ -14,6 +14,7 @@ import { register as registerJournalSearch } from "./tools/journal-search.js";
 import { register as registerJournalState } from "./tools/journal-state.js";
 import { register as registerJournalColdStart } from "./tools/journal-cold-start.js";
 import { register as registerJournalArchive } from "./tools/journal-archive.js";
+import { register as registerJournalRollup } from "./tools/journal-rollup.js";
 import { register as registerAlignmentCheck } from "./tools/alignment-check.js";
 import { register as registerNudge } from "./tools/nudge.js";
 import { register as registerContextSynthesize } from "./tools/context-synthesize.js";
@@ -68,6 +69,7 @@ if (args.includes("--list-tools")) {
     { name: "journal_state", description: "Layer 1 JSON state: read/write structured session data (v3)" },
     { name: "journal_cold_start", description: "Cache-aware cold start: hot/warm/cold entries (v3)" },
     { name: "journal_archive", description: "Archive old entries to cold storage (v3)" },
+    { name: "journal_rollup", description: "Condense old daily journals into weekly summaries (v3.4)" },
     { name: "knowledge_write", description: "Write a structured lesson to a category-specific knowledge file" },
     { name: "knowledge_read", description: "Read lessons from knowledge files, optionally filtered by project/category/query" },
     { name: "palace_read", description: "Read a room or list all rooms in the Memory Palace" },
@@ -95,6 +97,7 @@ registerJournalSearch(server);
 registerJournalState(server);
 registerJournalColdStart(server);
 registerJournalArchive(server);
+registerJournalRollup(server);
 registerAlignmentCheck(server);
 registerNudge(server);
 registerContextSynthesize(server);

@@ -9,7 +9,7 @@ import * as os from "node:os";
 // Constants
 // ---------------------------------------------------------------------------
 
-export const VERSION = "3.3.3";
+export const VERSION = "3.4.0";
 
 export const JOURNAL_ROOT =
   process.env.AGENT_RECALL_ROOT || path.join(os.homedir(), ".agent-recall");

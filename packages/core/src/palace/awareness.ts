@@ -17,13 +17,13 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { JOURNAL_ROOT } from "../types.js";
+import { getRoot } from "../types.js";
 import { ensureDir } from "../storage/fs-utils.js";
 
 const MAX_LINES = 200;
 
 function awarenessPath(): string {
-  return path.join(JOURNAL_ROOT, "awareness.md");
+  return path.join(getRoot(), "awareness.md");
 }
 
 export function readAwareness(): string {
@@ -73,7 +73,7 @@ export interface AwarenessState {
   lastUpdated: string;
 }
 
-const AWARENESS_JSON_PATH = () => path.join(JOURNAL_ROOT, "awareness-state.json");
+const AWARENESS_JSON_PATH = () => path.join(getRoot(), "awareness-state.json");
 
 export function readAwarenessState(): AwarenessState | null {
   const p = AWARENESS_JSON_PATH();

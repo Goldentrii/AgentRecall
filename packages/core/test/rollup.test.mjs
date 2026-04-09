@@ -11,7 +11,7 @@ describe("Journal rollup — module integration", () => {
 
   before(async () => {
     process.env.AGENT_RECALL_ROOT = TEST_ROOT;
-    rollup = await import("../dist/tools/journal-rollup.js");
+    rollup = await import("../dist/helpers/rollup.js");
 
     // Create a set of daily journal entries spanning 3 weeks
     const journalDir = path.join(TEST_ROOT, "projects", "test-proj", "journal");

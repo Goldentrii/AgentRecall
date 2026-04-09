@@ -4,7 +4,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { JOURNAL_ROOT, LEGACY_ROOT } from "../types.js";
+import { getRoot, getLegacyRoot } from "../types.js";
 
 /**
  * Resolve the journal directory for a project.
@@ -12,8 +12,9 @@ import { JOURNAL_ROOT, LEGACY_ROOT } from "../types.js";
  */
 export function journalDir(project: string): string {
   const safe = project.replace(/[^a-zA-Z0-9_\-\.]/g, "-");
-  const resolved = path.join(JOURNAL_ROOT, "projects", safe, "journal");
-  if (!resolved.startsWith(JOURNAL_ROOT)) {
+  const root = getRoot();
+  const resolved = path.join(root, "projects", safe, "journal");
+  if (!resolved.startsWith(root)) {
     throw new Error(`Invalid project name: ${project}`);
   }
   return resolved;
@@ -28,13 +29,14 @@ export function journalDirs(project: string): string[] {
   if (fs.existsSync(primary)) dirs.push(primary);
 
   // Legacy: ~/.claude/projects/*/memory/journal/
-  if (fs.existsSync(LEGACY_ROOT)) {
+  const legacyRoot = getLegacyRoot();
+  if (fs.existsSync(legacyRoot)) {
     try {
-      const entries = fs.readdirSync(LEGACY_ROOT);
+      const entries = fs.readdirSync(legacyRoot);
       for (const entry of entries) {
         if (entry.includes(project)) {
           const legacyJournal = path.join(
-            LEGACY_ROOT,
+            legacyRoot,
             entry,
             "memory",
             "journal"
@@ -57,7 +59,7 @@ export function journalDirs(project: string): string[] {
  */
 export function palaceDir(project: string): string {
   const safe = project.replace(/[^a-zA-Z0-9_\-\.]/g, "-");
-  return path.join(JOURNAL_ROOT, "projects", safe, "palace");
+  return path.join(getRoot(), "projects", safe, "palace");
 }
 
 /**

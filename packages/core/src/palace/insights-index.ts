@@ -10,7 +10,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { JOURNAL_ROOT } from "../types.js";
+import { getRoot } from "../types.js";
 import { ensureDir } from "../storage/fs-utils.js";
 
 export interface IndexedInsight {
@@ -31,7 +31,7 @@ export interface InsightsIndex {
 }
 
 function indexPath(): string {
-  return path.join(JOURNAL_ROOT, "insights-index.json");
+  return path.join(getRoot(), "insights-index.json");
 }
 
 export function readInsightsIndex(): InsightsIndex {

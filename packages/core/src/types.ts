@@ -9,12 +9,25 @@ import * as os from "node:os";
 // Constants
 // ---------------------------------------------------------------------------
 
-export const VERSION = "3.4.0";
+export const VERSION = "4.0.0";
 
-export const JOURNAL_ROOT =
-  process.env.AGENT_RECALL_ROOT || path.join(os.homedir(), ".agent-recall");
+// ---------------------------------------------------------------------------
+// Root directory (configurable at runtime for SDK usage)
+// ---------------------------------------------------------------------------
 
-export const LEGACY_ROOT = path.join(os.homedir(), ".claude", "projects");
+let _root: string | null = null;
+
+export function setRoot(root: string): void {
+  _root = root;
+}
+
+export function getRoot(): string {
+  return _root ?? process.env.AGENT_RECALL_ROOT ?? path.join(os.homedir(), ".agent-recall");
+}
+
+export function getLegacyRoot(): string {
+  return path.join(os.homedir(), ".claude", "projects");
+}
 
 export const SECTION_HEADERS: Record<string, string> = {
   brief: "## Brief",

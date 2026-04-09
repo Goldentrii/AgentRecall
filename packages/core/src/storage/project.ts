@@ -6,7 +6,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { JOURNAL_ROOT, LEGACY_ROOT } from "../types.js";
+import { getRoot, getLegacyRoot } from "../types.js";
 import type { ProjectInfo } from "../types.js";
 
 const execFileAsync = promisify(execFile);
@@ -77,7 +77,7 @@ export function listAllProjects(): ProjectInfo[] {
   const projects = new Map<string, ProjectInfo>();
 
   // New location
-  const projectsDir = path.join(JOURNAL_ROOT, "projects");
+  const projectsDir = path.join(getRoot(), "projects");
   if (fs.existsSync(projectsDir)) {
     const dirs = fs.readdirSync(projectsDir);
     for (const slug of dirs) {
@@ -99,11 +99,12 @@ export function listAllProjects(): ProjectInfo[] {
   }
 
   // Legacy location
-  if (fs.existsSync(LEGACY_ROOT)) {
+  const legacyRoot = getLegacyRoot();
+  if (fs.existsSync(legacyRoot)) {
     try {
-      const entries = fs.readdirSync(LEGACY_ROOT);
+      const entries = fs.readdirSync(legacyRoot);
       for (const entry of entries) {
-        const journalPath = path.join(LEGACY_ROOT, entry, "memory", "journal");
+        const journalPath = path.join(legacyRoot, entry, "memory", "journal");
         if (fs.existsSync(journalPath)) {
           const parts = entry.split("-").filter(Boolean);
           const slug = parts[parts.length - 1] || entry;

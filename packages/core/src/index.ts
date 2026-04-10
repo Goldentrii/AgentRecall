@@ -24,8 +24,11 @@ export type {
   GraphEdge,
   PalaceGraph,
   Importance,
+  Urgency,
   Confidence,
   WalkDepth,
+  MemoryCategory,
+  PinStatus,
 } from "./types.js";
 
 // Palace — rooms
@@ -75,6 +78,8 @@ export {
   computeSalience,
   ARCHIVE_THRESHOLD,
   AUTO_ARCHIVE_THRESHOLD,
+  CATEGORY_DECAY,
+  URGENCY_WEIGHTS,
 } from "./palace/salience.js";
 
 // Palace — insights index

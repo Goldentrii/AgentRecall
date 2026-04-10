@@ -127,5 +127,16 @@ export interface PalaceGraph {
 }
 
 export type Importance = "high" | "medium" | "low";
+export type Urgency = "today" | "this-week" | "eventual" | "none";
 export type Confidence = "high" | "medium" | "low";
 export type WalkDepth = "identity" | "active" | "relevant" | "full";
+
+/** Category determines decay rate — architecture decisions decay slowly, daily blockers decay fast. */
+export type MemoryCategory = "goal" | "architecture" | "decision" | "blocker" | "observation" | "lesson" | "general";
+
+/** Pinned items never get replaced by the awareness merge-or-replace cycle. */
+export interface PinStatus {
+  pinned: boolean;
+  reason?: string;        // "ultimate goal", "human override", etc.
+  pinned_at?: string;     // ISO date
+}

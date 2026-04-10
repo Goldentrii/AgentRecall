@@ -18,6 +18,8 @@ export interface IndexedInsight {
   title: string;
   source: string;           // where it came from (project, date)
   applies_when: string[];   // keywords for matching
+  skill_tags?: string[];    // skill patterns: "caching", "rate-limiting", "monorepo", "api-design"
+  projects?: string[];      // which projects contributed to this insight
   file?: string;            // optional path to full feedback file
   severity: "critical" | "important" | "minor";
   confirmed_count: number;
@@ -95,10 +97,20 @@ export function addIndexedInsight(insight: Omit<IndexedInsight, "id" | "confirme
 
 /**
  * Recall insights relevant to a given context.
- * Matches context words against applies_when keywords.
- * Returns top N matches sorted by relevance (keyword match count × severity weight × confirmation count).
+ *
+ * Matching layers (v2):
+ *   1. applies_when keywords (existing)
+ *   2. skill_tags (new — matches skill patterns like "caching", "api-design")
+ *   3. project correlation (new — insights from similar projects score higher)
+ *
+ * Relevance = (keyword_matches + skill_matches × 1.5) × severity × log2(confirmations + 1)
+ * Skill matches weighted 1.5x because they indicate transferable knowledge.
  */
-export function recallInsights(context: string, limit: number = 5): Array<IndexedInsight & { relevance: number }> {
+export function recallInsights(
+  context: string,
+  limit: number = 5,
+  currentProject?: string
+): Array<IndexedInsight & { relevance: number }> {
   const index = readInsightsIndex();
   if (index.insights.length === 0) return [];
 
@@ -106,20 +118,46 @@ export function recallInsights(context: string, limit: number = 5): Array<Indexe
   const severityWeight: Record<string, number> = { critical: 3, important: 2, minor: 1 };
 
   const scored = index.insights.map((insight) => {
-    let matchCount = 0;
+    // Layer 1: applies_when keyword matching
+    let keywordMatches = 0;
     for (const keyword of insight.applies_when) {
       const kwWords = keyword.toLowerCase().split(/\s+/);
       for (const kw of kwWords) {
         if (contextWords.some((cw) => cw.includes(kw) || kw.includes(cw))) {
-          matchCount++;
+          keywordMatches++;
         }
       }
     }
 
+    // Layer 2: skill_tags matching (weighted 1.5x — transferable knowledge is more valuable)
+    let skillMatches = 0;
+    if (insight.skill_tags) {
+      for (const tag of insight.skill_tags) {
+        const tagWords = tag.toLowerCase().split(/[\s\-_]+/);
+        for (const tw of tagWords) {
+          if (tw.length > 2 && contextWords.some((cw) => cw.includes(tw) || tw.includes(cw))) {
+            skillMatches++;
+          }
+        }
+      }
+    }
+
+    // Layer 3: project correlation boost (insights from projects the user works on get a small boost)
+    let projectBoost = 1.0;
+    if (currentProject && insight.projects?.length) {
+      if (insight.projects.includes(currentProject)) {
+        projectBoost = 1.2; // 20% boost for same-project insights
+      } else if (insight.projects.length > 1) {
+        projectBoost = 1.1; // 10% boost for multi-project insights (proven transferable)
+      }
+    }
+
+    const totalMatches = keywordMatches + (skillMatches * 1.5);
     const relevance =
-      matchCount *
+      totalMatches *
       (severityWeight[insight.severity] || 1) *
-      Math.log2(insight.confirmed_count + 1);
+      Math.log2(insight.confirmed_count + 1) *
+      projectBoost;
 
     return { ...insight, relevance };
   });

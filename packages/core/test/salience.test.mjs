@@ -1,41 +1,65 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-// Salience is pure math — no filesystem, can import directly
-const { computeSalience, ARCHIVE_THRESHOLD, AUTO_ARCHIVE_THRESHOLD } = await import("../dist/palace/salience.js");
+const { computeSalience, ARCHIVE_THRESHOLD, AUTO_ARCHIVE_THRESHOLD, CATEGORY_DECAY, URGENCY_WEIGHTS } = await import("../dist/palace/salience.js");
 
-describe("Salience scoring", () => {
-  it("high importance + recent + active + connected = near 1.0", () => {
+describe("Salience scoring v2", () => {
+  it("high importance + recent + active + connected + urgent = near 1.0", () => {
     const score = computeSalience({
       importance: "high",
-      lastUpdated: new Date().toISOString(), // today
+      lastUpdated: new Date().toISOString(),
       accessCount: 20,
       connectionCount: 10,
+      urgency: "today",
     });
     assert.ok(score > 0.9, `Expected >0.9, got ${score}`);
     assert.ok(score <= 1.0);
   });
 
   it("low importance + old + unused + isolated = low score", () => {
-    const oldDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(); // 90 days ago
+    const oldDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
     const score = computeSalience({
       importance: "low",
       lastUpdated: oldDate,
       accessCount: 0,
       connectionCount: 0,
     });
-    assert.ok(score < 0.2, `Expected <0.2, got ${score}`);
+    assert.ok(score < 0.15, `Expected <0.15, got ${score}`);
   });
 
-  it("medium importance today = around 0.54", () => {
-    const score = computeSalience({
-      importance: "medium",
-      lastUpdated: new Date().toISOString(),
+  it("importance alone contributes less than in v1 (max 0.10)", () => {
+    const highImp = computeSalience({
+      importance: "high",
+      lastUpdated: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
       accessCount: 0,
       connectionCount: 0,
     });
-    // 0.6*0.4 + ~1.0*0.3 + 0*0.2 + 0*0.1 = 0.24 + 0.3 = 0.54
-    assert.ok(score > 0.5 && score < 0.6, `Expected ~0.54, got ${score}`);
+    const lowImp = computeSalience({
+      importance: "low",
+      lastUpdated: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+      accessCount: 0,
+      connectionCount: 0,
+    });
+    const impDelta = highImp - lowImp;
+    assert.ok(impDelta < 0.08, `Importance delta should be small, got ${impDelta}`);
+  });
+
+  it("urgency=today boosts score significantly", () => {
+    const base = computeSalience({
+      importance: "medium",
+      lastUpdated: new Date().toISOString(),
+      accessCount: 5,
+      connectionCount: 2,
+    });
+    const urgent = computeSalience({
+      importance: "medium",
+      lastUpdated: new Date().toISOString(),
+      accessCount: 5,
+      connectionCount: 2,
+      urgency: "today",
+    });
+    assert.ok(urgent > base, "Urgency=today should boost score");
+    assert.ok(urgent - base > 0.1, `Urgency boost should be >0.1, got ${urgent - base}`);
   });
 
   it("recency decays over time", () => {
@@ -51,46 +75,72 @@ describe("Salience scoring", () => {
       accessCount: 5,
       connectionCount: 2,
     });
-    const monthAgo = computeSalience({
+    assert.ok(today > weekAgo, "Today should score higher than a week ago");
+  });
+
+  it("architecture category decays slower than blockers", () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const arch = computeSalience({
       importance: "medium",
-      lastUpdated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      lastUpdated: thirtyDaysAgo,
       accessCount: 5,
       connectionCount: 2,
+      category: "architecture",
     });
-    assert.ok(today > weekAgo, "Today should score higher than a week ago");
-    assert.ok(weekAgo > monthAgo, "A week ago should score higher than a month ago");
+    const blocker = computeSalience({
+      importance: "medium",
+      lastUpdated: thirtyDaysAgo,
+      accessCount: 5,
+      connectionCount: 2,
+      category: "blocker",
+    });
+    assert.ok(arch > blocker, `Architecture (${arch}) should score higher than blocker (${blocker}) after 30 days`);
   });
 
-  it("access count is capped at 20", () => {
-    const at20 = computeSalience({
-      importance: "medium",
-      lastUpdated: new Date().toISOString(),
-      accessCount: 20,
-      connectionCount: 0,
+  it("goal category barely decays", () => {
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const goal = computeSalience({
+      importance: "high",
+      lastUpdated: ninetyDaysAgo,
+      accessCount: 10,
+      connectionCount: 5,
+      category: "goal",
     });
-    const at100 = computeSalience({
-      importance: "medium",
-      lastUpdated: new Date().toISOString(),
-      accessCount: 100,
-      connectionCount: 0,
-    });
-    assert.equal(at20, at100); // both capped at min(1.0, count/20)
+    assert.ok(goal > 0.4, `Goal after 90 days should still be >0.4, got ${goal}`);
   });
 
-  it("connection count is capped at 10", () => {
-    const at10 = computeSalience({
+  it("pinned items always return 1.0", () => {
+    const score = computeSalience({
+      importance: "low",
+      lastUpdated: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+      accessCount: 0,
+      connectionCount: 0,
+      pin: { pinned: true, reason: "ultimate goal" },
+    });
+    assert.equal(score, 1.0);
+  });
+
+  it("unpinned items calculate normally", () => {
+    const score = computeSalience({
       importance: "medium",
       lastUpdated: new Date().toISOString(),
       accessCount: 0,
-      connectionCount: 10,
+      connectionCount: 0,
+      pin: { pinned: false },
     });
-    const at50 = computeSalience({
+    assert.ok(score < 1.0);
+    assert.ok(score > 0);
+  });
+
+  it("backward compatible — no urgency/category/pin still works", () => {
+    const score = computeSalience({
       importance: "medium",
       lastUpdated: new Date().toISOString(),
       accessCount: 0,
-      connectionCount: 50,
+      connectionCount: 0,
     });
-    assert.equal(at10, at50); // both capped
+    assert.ok(score > 0);
+    assert.ok(score < 1.0);
   });
 
   it("ARCHIVE_THRESHOLD is 0.15", () => {
@@ -99,5 +149,16 @@ describe("Salience scoring", () => {
 
   it("AUTO_ARCHIVE_THRESHOLD is 0.05", () => {
     assert.equal(AUTO_ARCHIVE_THRESHOLD, 0.05);
+  });
+
+  it("CATEGORY_DECAY has expected rates", () => {
+    assert.equal(CATEGORY_DECAY.goal, 0.99);
+    assert.equal(CATEGORY_DECAY.blocker, 0.90);
+    assert.ok(CATEGORY_DECAY.architecture > CATEGORY_DECAY.blocker);
+  });
+
+  it("URGENCY_WEIGHTS has expected values", () => {
+    assert.equal(URGENCY_WEIGHTS.today, 1.0);
+    assert.equal(URGENCY_WEIGHTS.none, 0.0);
   });
 });

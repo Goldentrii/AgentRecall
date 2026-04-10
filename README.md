@@ -1,6 +1,7 @@
 <h1 align="center">AgentRecall</h1>
 
-<p align="center"><strong>Persistent, compounding memory for AI agents. MCP server + SDK + CLI.</strong></p>
+<p align="center"><strong>Your agent doesn't just remember. It learns how you think.</strong></p>
+<p align="center">Persistent, compounding memory + Intelligent Distance Protocol. MCP server + SDK + CLI.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/agent-recall-mcp"><img src="https://img.shields.io/npm/v/agent-recall-mcp?style=flat-square&label=MCP&color=5D34F2" alt="MCP npm"></a>
@@ -117,15 +118,59 @@ Human: "we need SDK, CLI,                     │
 
 ## Why Choose AgentRecall
 
-**Your agents forget everything between sessions.** Decisions evaporate. Mistakes repeat. Context rebuilds from scratch every time. AgentRecall fixes this with persistent memory that compounds — getting smarter, not bigger.
+**AgentRecall is not a memory tool. It's a learning loop.**
 
-- **Near-universal compatibility.** MCP server for any MCP-compatible agent (Claude Code, Cursor, Windsurf, VS Code, Codex). SDK for any JS/TS framework (LangChain, CrewAI, Vercel AI SDK, custom agents). CLI for terminal and CI workflows. One memory system, every surface.
+Memory is the mechanism. Understanding is the goal. Every time you correct your agent — "no, not that version", "put this section first", "ask me before you assume" — that correction is stored, weighted, and recalled next time. After 10 sessions, your agent doesn't just remember your project. It understands how you think: your priorities, your communication style, your non-negotiables.
+
+This is the **Intelligent Distance Protocol** — not closing the gap between human and AI (that gap is structural), but navigating it better every session.
+
+- **Your agent learns how you think.** Humans are inconsistent — we skip from A to E, forget what we said yesterday, change priorities mid-sentence. AgentRecall captures every correction and surfaces it before the next mistake. The gap between what you mean and what your agent does shrinks with every session.
 
 - **Compounding awareness, not infinite logs.** Memory is capped at 200 lines. New insights either merge with existing ones (strengthening them) or replace the weakest. After 100 sessions, your awareness file is still 200 lines — but each line carries the weight of cross-validated, confirmed observations.
 
 - **Cross-project recall.** Lessons learned in one project apply everywhere. Built a rate limiter last month? That lesson surfaces when you're building one today — in a different repo, through a different agent.
 
+- **Near-universal compatibility.** MCP server for any MCP-compatible agent (Claude Code, Cursor, Windsurf, VS Code, Codex). SDK for any JS/TS framework (LangChain, CrewAI, Vercel AI SDK, custom agents). CLI for terminal and CI workflows. One memory system, every surface.
+
 - **Zero cloud, zero telemetry, all local.** Everything is markdown on disk. Browse it in Obsidian, grep it in the terminal, version it in git. No accounts, no API keys, no lock-in.
+
+### Use Case 1: The Scattered Human
+
+A real session where the human gave non-linear, scattered instructions across a 2-day project:
+
+> Human: "we need SDK, CLI, also update README, oh and the npm versions are wrong, fix those too"
+
+Without AgentRecall, the agent guesses priority and misses items. With AgentRecall:
+
+| What the agent already knew | How it knew |
+|---|---|
+| "This human communicates in scattered bursts — structurize into modules before executing" | `awareness_update` from 3 prior sessions |
+| "Ask when ambiguous, proceed when clear" | `alignment_check` correction stored last week |
+| "No version inflation — this human cares about semver discipline" | `nudge` captured mid-session, recalled immediately |
+
+Result: Agent presented a structured 4-step plan, human confirmed, zero rework. A fresh agent without AgentRecall would have guessed wrong on versions, buried the most important feature in the README, and published without testing.
+
+### Use Case 2: The Cross-Project Lesson
+
+An engineer built a proxy server with rate limiting (Project A). Three weeks later, started an API gateway (Project B).
+
+```
+/arstart on Project B:
+  recall_insight: "Rate limiting prevents runaway costs"
+    → source: Project A, confirmed 3x, severity: critical
+    → applies_when: ["api", "proxy", "rate-limit", "cost"]
+    → The lesson from Project A surfaces automatically in Project B
+```
+
+The engineer never mentioned rate limiting. AgentRecall matched the project context against the global insights index and surfaced it proactively.
+
+### Use Case 3: The Correction That Sticks
+
+Session 1: Agent uses version 4.0.0 for a patch release. Human corrects: "That's version inflation. Use 3.3.4."
+
+Session 2 (next day, different agent): Awareness already contains "no version inflation — this human cares about conservative versioning." The new agent gets it right the first time.
+
+Without AgentRecall, the same correction would be needed again. And again. And again. With AgentRecall, **every correction happens exactly once.**
 
 ---
 
@@ -153,11 +198,11 @@ npx agent-recall-cli palace walk --depth active
 
 ## What Is AgentRecall?
 
-A **persistent memory system** that gives AI agents **compounding awareness** across sessions. Not a log. Not a database. A second brain that gets smarter the more you use it.
+A **learning system** that bridges the gap between how humans think and how AI agents work. Not a log. Not a database. A compounding loop where every correction, decision, and insight makes the next session better than the last.
 
-**The problem:** AI agents start from zero every session. They forget your decisions, repeat your mistakes, lose context mid-project, and misunderstand you the same way twice.
+**The problem:** AI agents don't truly forget — they lose focus. Priorities blur across sessions. Lessons go dormant. The same misunderstanding happens twice because no one stored the correction. The gap between what you mean and what your agent does stays constant, session after session.
 
-**The fix:** AgentRecall stores knowledge in a five-layer memory pyramid — from quick captures to cross-project insights — and forces compression so memory gets more valuable over time, not more bloated.
+**The fix:** AgentRecall stores knowledge in a five-layer memory pyramid — from quick captures to cross-project insights — and forces compression so memory gets more valuable over time. But more importantly, it closes the **Intelligent Distance** gap: every human correction is captured, weighted, and recalled before the agent makes the same mistake again.
 
 | Without AgentRecall | With AgentRecall |
 |---------------------|------------------|
@@ -562,7 +607,9 @@ MIT License.
 
 # AgentRecall（中文文档）
 
-> **你的 AI 智能体每次对话都从零开始，要么就是记不清楚，更甚者是不是听不懂你说话？导致每次的项目都做的非常乱？’。AgentRecall 解决这个问题。**
+> **你的智能体记不清楚？听不懂你说话？每次项目都做得非常乱？**
+>
+> **AgentRecall 让它学会理解你的思维方式。** 持久复合记忆 + 智能距离协议。MCP 服务器 + SDK + CLI。
 
 ---
 
@@ -648,15 +695,61 @@ curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentr
 
 ## 为什么选择 AgentRecall
 
-**你的智能体在会话之间遗忘一切。** 决策蒸发，错误重复，上下文每次从零构建，要么就是非常混乱。AgentRecall 用持久记忆修复这个问题 — 记忆会复合增长，而不是无限膨胀，同时模拟人类记忆，把不重要的东西冬眠起来，但是又可以随时唤醒。
+**AgentRecall 不是记忆工具，而是学习循环。**
 
-- **近乎通用的兼容性。** MCP 服务器支持所有 MCP 兼容智能体（Claude Code、Cursor、Windsurf、VS Code、Codex）。SDK 支持任何 JS/TS 框架（LangChain、CrewAI、Vercel AI SDK、自定义智能体）。CLI 支持终端和 CI 工作流。一套记忆系统，覆盖所有场景。
+你的智能体在会话之间不是真的遗忘——它们是记不清楚、分不清主次，甚至听不懂你在说什么。AgentRecall 像人类记忆一样运作：把不重要的东西冬眠起来，但随时可以唤醒。更重要的是，它让智能体越用越懂你。
 
-- **复合感知，而非无限日志。** 记忆上限 200 行。新洞察要么与已有的合并（增强），要么替换最弱的。100 个会话后，感知文件仍然是 200 行 — 但每一行都承载着经过交叉验证的确认观察。
+记忆是机制，理解才是目标。每次你纠正智能体 —— "不要那个版本"、"把这个部分放在最前面"、"做之前先问我" —— 这个纠正会被存储、加权、并在下次自动召回。10 个会话后，你的智能体不只是记住了你的项目，它理解了你的思维方式：你的优先级、你的沟通风格、你的底线。
+
+这就是**智能距离协议** —— 不是消除人类与 AI 之间的差距（这个差距是结构性的），而是每次会话都导航得更好。
+
+- **你的智能体学会理解你的思维。** 人类本身就是不一致的 —— 我们会从 A 直接跳到 E，跳过 B、C、D。我们会忘记昨天说的话，会在句子中间改变优先级。AgentRecall 捕获每一次纠正，在下一个错误发生之前浮现。你的意图和智能体行为之间的差距，每次会话都在缩小。
+
+- **复合感知，而非无限日志。** 记忆上限 200 行。新洞察要么与已有的合并（增强），要么替换最弱的。100 个会话后，感知文件仍然是 200 行 —— 但每一行都承载着经过交叉验证的确认观察。
 
 - **跨项目召回。** 在一个项目中学到的教训适用于所有项目。上个月做了限流器？今天在另一个项目构建时，那个教训会自动浮现。
 
+- **近乎通用的兼容性。** MCP 服务器支持所有 MCP 兼容智能体（Claude Code、Cursor、Windsurf、VS Code、Codex）。SDK 支持任何 JS/TS 框架（LangChain、CrewAI、Vercel AI SDK、自定义智能体）。CLI 支持终端和 CI 工作流。一套记忆系统，覆盖所有场景。
+
 - **零云端，零遥测，全部本地。** 一切都是磁盘上的 markdown。在 Obsidian 中浏览，在终端中 grep，在 git 中版本管理。无需账户、API 密钥或锁定。
+
+### 用例一：跳跃式思维的人类
+
+一个真实会话，人类在两天项目中给出了非线性、分散的指令：
+
+> 人类："我们需要 SDK、CLI，还有更新 README，哦对了 npm 版本号也错了，一起修"
+
+没有 AgentRecall，智能体猜测优先级，遗漏项目。有 AgentRecall：
+
+| 智能体已经知道的 | 怎么知道的 |
+|---|---|
+| "这个人沟通是分散的 —— 先结构化成模块再执行" | 3 个先前会话的 `awareness_update` |
+| "模糊时询问，明确时执行" | 上周 `alignment_check` 存储的纠正 |
+| "不要版本膨胀 —— 这个人很在意语义化版本" | 会话中 `nudge` 捕获，立即召回 |
+
+结果：智能体呈现结构化的 4 步方案，人类确认，零返工。没有 AgentRecall 的新智能体会猜错版本号、把最重要的功能埋在 README 深处、并且不测试就发布。
+
+### 用例二：跨项目经验传递
+
+一个工程师构建了带限流的代理服务器（项目 A）。三周后，开始构建 API 网关（项目 B）。
+
+```
+在项目 B 运行 /arstart：
+  recall_insight："限流防止成本失控"
+    → 来源：项目 A，确认 3 次，严重性：critical
+    → 适用场景：["api", "proxy", "rate-limit", "cost"]
+    → 项目 A 的教训在项目 B 中自动浮现
+```
+
+工程师从未提到限流。AgentRecall 自动匹配项目上下文与全局洞察索引。
+
+### 用例三：纠正只发生一次
+
+会话 1：智能体把补丁版本设为 4.0.0。人类纠正："这是版本膨胀，用 3.3.4。"
+
+会话 2（第二天，不同的智能体）：感知系统已包含"不要版本膨胀 —— 这个人在意保守的版本策略"。新智能体第一次就做对了。
+
+没有 AgentRecall，同样的纠正需要一次又一次。有 AgentRecall，**每个纠正只发生一次。**
 
 ---
 
@@ -684,11 +777,11 @@ npx agent-recall-cli palace walk --depth active
 
 ## AgentRecall 是什么？
 
-一个**持久记忆系统**，让 AI 智能体拥有**跨会话复合感知**。不是日志，不是数据库——是一个用得越多越聪明的第二大脑。
+一个**学习系统**，弥合人类思维方式与 AI 智能体工作方式之间的差距。不是日志，不是数据库——是一个复合循环，每一次纠正、决策和洞察都让下一次会话比上一次更好。
 
-**问题：** AI 智能体每次会话都是全新开始，要么就是健忘症。忘记你的决策，重复同样的错误，丢失项目上下文，以同样的方式误解你。
+**问题：** AI 智能体不是真的遗忘——它们是健忘症。记不清楚优先级，分不清主次，教训进入休眠状态，同样的误解重复发生因为没人存储那次纠正。你的意图和智能体行为之间的差距，会话接会话地保持不变。
 
-**解决方案：** AgentRecall 将知识存储在五层记忆金字塔中——从快速捕获到跨项目洞察——并通过强制压缩让记忆随时间增值，而不是膨胀。
+**解决方案：** AgentRecall 将知识存储在五层记忆金字塔中——从快速捕获到跨项目洞察——并通过强制压缩让记忆随时间增值。但更重要的是，它缩小了**智能距离**差距：每一次人类的纠正都被捕获、加权、并在智能体犯同样错误之前被召回。
 
 | 没有 AgentRecall | 有 AgentRecall |
 |-----------------|---------------|

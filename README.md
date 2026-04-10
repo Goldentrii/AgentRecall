@@ -562,7 +562,7 @@ MIT License.
 
 # AgentRecall（中文文档）
 
-> **你的 AI 智能体每次对话都从零开始。AgentRecall 解决这个问题。**
+> **你的 AI 智能体每次对话都从零开始，要么就是记不清楚，更甚者是不是听不懂你说话？导致每次的项目都做的非常乱？’。AgentRecall 解决这个问题。**
 
 ---
 
@@ -573,11 +573,11 @@ MIT License.
 
 ## `/arsave` 和 `/arstart`
 
-> **两个命令，就这么简单。**
+> **两个命令，ezpz。**
 
 | 命令 | 时机 | 功能 |
 |------|------|------|
-| **`/arsave`** | 会话结束时 | 写入日志 + 整合到宫殿 + 更新感知 + 可选 git 推送 |
+| **`/arsave`** | 会话结束时 | 写入日志 + 整合到记忆宫殿 + 更新感知 + 可选 git 推送 |
 | **`/arstart`** | 会话开始时 | 召回跨项目洞察 + 遍历宫殿 + 加载上下文 |
 
 会话结束时输入 `/arsave`，所有内容自动保存。下次开始时输入 `/arstart`，所有上下文自动恢复。
@@ -633,7 +633,7 @@ curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentr
   ├─ 按顺序执行：                               │
   │   1. 核心提取 ✓                             └─ 2 分钟完成
   │   2. 工具逻辑拆分 ✓                             （没有 AgentRecall
-  │   3. MCP 封装 ✓                                   需要 20 分钟冷启动）
+  │   3. MCP 封装 ✓                                   需要 2-8 分钟冷启动）
   │   4. SDK + CLI ✓
   │
 /arsave
@@ -648,7 +648,7 @@ curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentr
 
 ## 为什么选择 AgentRecall
 
-**你的智能体在会话之间遗忘一切。** 决策蒸发，错误重复，上下文每次从零构建。AgentRecall 用持久记忆修复这个问题 — 记忆会复合增长，而不是无限膨胀。
+**你的智能体在会话之间遗忘一切。** 决策蒸发，错误重复，上下文每次从零构建，要么就是非常混乱。AgentRecall 用持久记忆修复这个问题 — 记忆会复合增长，而不是无限膨胀，同时模拟人类记忆，把不重要的东西冬眠起来，但是又可以随时唤醒。
 
 - **近乎通用的兼容性。** MCP 服务器支持所有 MCP 兼容智能体（Claude Code、Cursor、Windsurf、VS Code、Codex）。SDK 支持任何 JS/TS 框架（LangChain、CrewAI、Vercel AI SDK、自定义智能体）。CLI 支持终端和 CI 工作流。一套记忆系统，覆盖所有场景。
 
@@ -686,7 +686,7 @@ npx agent-recall-cli palace walk --depth active
 
 一个**持久记忆系统**，让 AI 智能体拥有**跨会话复合感知**。不是日志，不是数据库——是一个用得越多越聪明的第二大脑。
 
-**问题：** AI 智能体每次会话都是全新开始。忘记你的决策，重复同样的错误，丢失项目上下文，以同样的方式误解你。
+**问题：** AI 智能体每次会话都是全新开始，要么就是健忘症。忘记你的决策，重复同样的错误，丢失项目上下文，以同样的方式误解你。
 
 **解决方案：** AgentRecall 将知识存储在五层记忆金字塔中——从快速捕获到跨项目洞察——并通过强制压缩让记忆随时间增值，而不是膨胀。
 

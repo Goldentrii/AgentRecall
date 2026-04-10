@@ -71,5 +71,10 @@ export function palaceDir(project: string): string {
  * Resolve a room directory within a project's palace.
  */
 export function roomDir(project: string, roomSlug: string): string {
-  return path.join(palaceDir(project), "rooms", roomSlug);
+  const safeSlug = roomSlug.replace(/[^a-zA-Z0-9_\-]/g, "-");
+  const resolved = path.join(palaceDir(project), "rooms", safeSlug);
+  if (!resolved.startsWith(getRoot())) {
+    throw new Error(`Invalid room slug: ${roomSlug}`);
+  }
+  return resolved;
 }

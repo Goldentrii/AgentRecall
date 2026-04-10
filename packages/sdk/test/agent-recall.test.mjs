@@ -16,7 +16,9 @@ describe("AgentRecall SDK", () => {
     ar = new AgentRecall({ root: TEST_ROOT, project: "sdk-test" });
   });
 
-  after(() => {
+  after(async () => {
+    const { resetRoot } = await import("@agent-recall/core");
+    resetRoot();
     fs.rmSync(TEST_ROOT, { recursive: true, force: true });
   });
 

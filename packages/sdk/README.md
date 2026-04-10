@@ -58,6 +58,61 @@ curl -o ~/.claude/commands/arsave.md https://raw.githubusercontent.com/Goldentri
 curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentrii/AgentRecall/main/commands/arstart.md
 ```
 
+### The Difference
+
+```
+WITHOUT AgentRecall                    WITH AgentRecall
+──────────────────                     ────────────────
+
+Day 1: Build monorepo                 Day 1: /arstart → /arsave
+Day 2: "What monorepo?"               Day 2: /arstart
+  → 20 min re-explaining                → 2 sec: loads all decisions
+  → Agent repeats same mistakes          → Knows "no version inflation"
+  → Forgets your priorities              → Knows "arsave = hero section"
+  → Misses half the tasks                → Pushes to both repos
+```
+
+### Real Session Flow
+
+This is from an actual multi-day project where a human gave scattered, non-linear instructions. The agent used AgentRecall throughout:
+
+```
+Session 1 (Tuesday)                          Session 2 (Wednesday, different agent)
+─────────────────                            ─────────────────────────────────────
+
+/arstart                                     /arstart
+  │                                            │
+  ├─ palace_walk ──→ "monorepo project,        ├─ palace_walk ──→ loads Tuesday's
+  │                   SDK + CLI planned"        │                  architecture decisions
+  │                                            │                  in 200 tokens
+  ├─ recall_insight ──→ 3 prior lessons        ├─ recall_insight
+  │   • "structurize scattered input"          │   • "no version inflation"
+  │   • "search before building"               │   • "arsave/arstart = hero section"
+  │   • "ask when ambiguous"                   │
+  │                                            ├─ Continues exactly where
+  ▼                                            │  Session 1 left off
+Human: "we need SDK, CLI,                     │
+  update README, fix versions"                 ▼
+  │                                           Human: "publish to npm,
+  ├─ alignment_check                            update both GitHub repos"
+  │   confidence: medium                        │
+  │   4 tasks detected                          ├─ No re-explanation needed.
+  │   → present plan → human confirms           │   Agent already knows the
+  │                                             │   monorepo structure, package
+  ├─ Execute in order:                          │   names, and version policy.
+  │   1. Core extraction ✓                      │
+  │   2. Tool logic split ✓                     └─ Done in 2 minutes
+  │   3. MCP wrappers ✓                             (vs 20 min cold start
+  │   4. SDK + CLI ✓                                  without AgentRecall)
+  │
+/arsave
+  │
+  ├─ journal_write ──→ decisions + tasks saved
+  ├─ awareness_update ──→ "scattered input →
+  │                        structurize → confirm"
+  └─ palace_write ──→ architecture room updated
+```
+
 ---
 
 ## Why Choose AgentRecall
@@ -508,6 +563,86 @@ MIT License.
 # AgentRecall（中文文档）
 
 > **你的 AI 智能体每次对话都从零开始。AgentRecall 解决这个问题。**
+
+---
+
+<p align="center">
+  <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farsave-保存会话-FF6B6B?style=for-the-badge" alt="/arsave"></a>
+  <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farstart-加载上下文-4ECDC4?style=for-the-badge" alt="/arstart"></a>
+</p>
+
+## `/arsave` 和 `/arstart`
+
+> **两个命令，就这么简单。**
+
+| 命令 | 时机 | 功能 |
+|------|------|------|
+| **`/arsave`** | 会话结束时 | 写入日志 + 整合到宫殿 + 更新感知 + 可选 git 推送 |
+| **`/arstart`** | 会话开始时 | 召回跨项目洞察 + 遍历宫殿 + 加载上下文 |
+
+会话结束时输入 `/arsave`，所有内容自动保存。下次开始时输入 `/arstart`，所有上下文自动恢复。
+
+```bash
+# 安装命令（一次性，仅 Claude Code）
+mkdir -p ~/.claude/commands
+curl -o ~/.claude/commands/arsave.md https://raw.githubusercontent.com/Goldentrii/AgentRecall/main/commands/arsave.md
+curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentrii/AgentRecall/main/commands/arstart.md
+```
+
+### 效果对比
+
+```
+没有 AgentRecall                        有 AgentRecall
+──────────────                          ────────────
+
+第 1 天：构建单仓                       第 1 天：/arstart → /arsave
+第 2 天："什么单仓？"                   第 2 天：/arstart
+  → 20 分钟重新解释                       → 2 秒：加载所有决策
+  → 智能体重复同样的错误                  → 知道"不要版本膨胀"
+  → 忘记你的优先级                        → 知道"arsave 要放首位"
+  → 遗漏一半的任务                        → 自动推送两个仓库
+```
+
+### 真实会话流程
+
+以下来自一个真实的多日项目，人类给出了分散、非线性的指令。智能体全程使用 AgentRecall：
+
+```
+会话 1（周二）                                会话 2（周三，不同的智能体）
+──────────                                    ────────────────────────
+
+/arstart                                     /arstart
+  │                                            │
+  ├─ palace_walk ──→ "单仓项目，               ├─ palace_walk ──→ 200 token
+  │                   计划构建 SDK + CLI"       │                  加载周二的架构决策
+  │                                            │
+  ├─ recall_insight ──→ 3 条历史教训            ├─ recall_insight
+  │   • "结构化分散的输入"                     │   • "不要版本膨胀"
+  │   • "先搜索再构建"                         │   • "arsave 放在最显眼的位置"
+  │   • "模糊时询问，明确时执行"               │
+  │                                            ├─ 从会话 1 离开的地方
+  ▼                                            │  无缝继续
+人类："我们需要 SDK、CLI，                     │
+  更新 README，修复版本号"                     ▼
+  │                                           人类："发布到 npm，
+  ├─ alignment_check                            更新两个 GitHub 仓库"
+  │   confidence: medium                        │
+  │   检测到 4 个任务项                         ├─ 无需重新解释。
+  │   → 呈现方案 → 人类确认                    │   智能体已经知道单仓结构、
+  │                                             │   包名和版本策略。
+  ├─ 按顺序执行：                               │
+  │   1. 核心提取 ✓                             └─ 2 分钟完成
+  │   2. 工具逻辑拆分 ✓                             （没有 AgentRecall
+  │   3. MCP 封装 ✓                                   需要 20 分钟冷启动）
+  │   4. SDK + CLI ✓
+  │
+/arsave
+  │
+  ├─ journal_write ──→ 决策 + 任务已保存
+  ├─ awareness_update ──→ "分散输入 →
+  │                        结构化 → 确认 → 执行"
+  └─ palace_write ──→ architecture 房间已更新
+```
 
 ---
 

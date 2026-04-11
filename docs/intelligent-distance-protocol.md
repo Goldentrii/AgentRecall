@@ -51,7 +51,7 @@ The protocol doesn't try to close this gap. It designs around it:
 | **L4** | Awareness | Self-compounding 200-line document | End of session, forced merge | ~400 tokens |
 | **L5** | Insight Index | Cross-project insight matching | On recall, keyword-based | ~50 tokens/match |
 
-**L3 Memory Palace** organizes knowledge into themed rooms (goals, architecture, blockers, alignment, knowledge, or custom). Writing to one room auto-updates cross-references in related rooms via `[[wikilinks]]`. Every room has a salience score: `importance(0.4) + recency(0.3) + access_frequency(0.2) + connections(0.1)`.
+**L3 Memory Palace** organizes knowledge into themed rooms (goals, architecture, blockers, alignment, knowledge, or custom). Writing to one room auto-updates cross-references in related rooms via `[[wikilinks]]`. Every room has a salience score: `recency(0.30) + access(0.25) + connections(0.20) + urgency(0.15) + importance(0.10)`.
 
 **L4 Awareness** is a living document capped at 200 lines. When a new insight is added, similar existing insights merge (strengthen) or the weakest gets replaced. The constraint forces compression. Compression creates compounding. After 100 sessions, the document is still 200 lines — but each line carries the weight of cross-validated observations.
 

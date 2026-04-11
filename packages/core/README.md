@@ -514,7 +514,7 @@ L5: Insight Index      recall_insight            "cross-project experience"
 
 **Fan-out writes** — Write to one room, cross-references auto-update in related rooms via `[[wikilinks]]`. Mechanical, zero LLM cost.
 
-**Salience scoring** — Every room has a salience score: `importance(0.4) + recency(0.3) + access_frequency(0.2) + connections(0.1)`. High-salience rooms surface first. Below threshold → auto-archive.
+**Salience scoring** — Every room has a salience score: `recency(0.30) + access(0.25) + connections(0.20) + urgency(0.15) + importance(0.10)`. High-salience rooms surface first. Below threshold → auto-archive.
 
 **Compounding awareness** — `awareness.md` is capped at 200 lines. When new insights are added, similar existing ones merge (strengthen), dissimilar ones compete (lowest-confirmation gets replaced). The constraint creates compression. Compression creates compounding.
 

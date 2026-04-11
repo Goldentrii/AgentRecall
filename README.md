@@ -1,6 +1,7 @@
 <h1 align="center">AgentRecall</h1>
 
 <p align="center"><strong>Your agent doesn't just remember. It learns how you think.</strong></p>
+<p align="center">Your agent remembers yesterday, learns from corrections, and gets better at working with you over time.</p>
 <p align="center">Persistent, compounding memory + Intelligent Distance Protocol. MCP server + SDK + CLI.</p>
 
 <p align="center">
@@ -72,6 +73,14 @@ Day 2: "What monorepo?"               Day 2: /arstart
   → Forgets your priorities              → Knows "arsave = hero section"
   → Misses half the tasks                → Pushes to both repos
 ```
+
+### Three Layers of Value
+
+**Layer 1 (5 seconds):** It makes your AI agent remember what happened last session.
+
+**Layer 2 (30 seconds):** Every time you correct your agent — "no, not that version", "ask me first" — that correction is stored permanently and recalled before the agent makes the same mistake again. After 10 sessions, your agent understands your priorities, your communication style, your non-negotiables.
+
+**Layer 3 (2 minutes):** The [Intelligent Distance Protocol](https://github.com/Goldentrii/AgentRecall/wiki/Intelligent-Distance). The structural gap between human thinking and AI action can't be closed — but it can be navigated better every session. Corrections are training data. The 200-line awareness cap forces quality over quantity. Cross-project insights mean lessons learned once apply everywhere.
 
 ### Real Session Flow
 
@@ -609,7 +618,11 @@ MIT License.
 
 > **你的智能体记不清楚？听不懂你说话？每次项目都做得非常乱？**
 >
-> **AgentRecall 让它学会理解你的思维方式。** 持久复合记忆 + 智能距离协议。MCP 服务器 + SDK + CLI。
+> **AgentRecall 让它学会理解你的思维方式。**
+>
+> 你的 agent 记住昨天，从纠正中学习，并随时间越来越擅长与你合作。
+>
+> 持久复合记忆 + 智能距离协议。MCP 服务器 + SDK + CLI。
 
 ---
 
@@ -649,6 +662,14 @@ curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentr
   → 忘记你的优先级                        → 知道"arsave 要放首位"
   → 遗漏一半的任务                        → 自动推送两个仓库
 ```
+
+### 三层价值
+
+**第一层（5 秒）：** 让你的 AI agent 记住上次会话发生了什么。
+
+**第二层（30 秒）：** 每次你纠正 agent——"不，不是那个版本"、"先问我"——这个纠正被永久存储，并在 agent 再犯同样错误之前被召回。10 次会话后，你的 agent 理解你的优先级、你的沟通风格、你的不可妥协项。
+
+**第三层（2 分钟）：** [智能距离协议](https://github.com/Goldentrii/AgentRecall/wiki/Intelligent-Distance)。人类思维和 AI 行动之间的结构性鸿沟无法消除——但可以在每次会话中更好地穿越。纠正就是训练数据。200 行感知上限强制质量优于数量。跨项目洞察意味着学到一次的经验到处适用。
 
 ### 真实会话流程
 

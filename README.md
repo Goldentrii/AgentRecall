@@ -41,6 +41,13 @@
   <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farsave-Save_Session-FF6B6B?style=for-the-badge" alt="/arsave"></a>
   <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farstart-Load_Context-4ECDC4?style=for-the-badge" alt="/arstart"></a>
 </p>
+<p align="center">
+  <a href="#how-memory-compounds"><img src="https://img.shields.io/badge/1-AUTO--NAMING-5D34F2?style=for-the-badge" alt="Auto-Naming"></a>
+  <a href="#how-memory-compounds"><img src="https://img.shields.io/badge/2-INDEXES-0EA5E9?style=for-the-badge" alt="Indexes"></a>
+  <a href="#how-memory-compounds"><img src="https://img.shields.io/badge/3-RELATIVITY-10B981?style=for-the-badge" alt="Relativity"></a>
+  <a href="#how-memory-compounds"><img src="https://img.shields.io/badge/4-WEIGHT_%2B_DECAY-F59E0B?style=for-the-badge" alt="Weight + Decay"></a>
+  <a href="#how-memory-compounds"><img src="https://img.shields.io/badge/5-FEEDBACK_LOOP-EF4444?style=for-the-badge" alt="Feedback Loop"></a>
+</p>
 
 ## `/arsave` and `/arstart`
 
@@ -684,6 +691,13 @@ MIT License.
 <p align="center">
   <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farsave-保存会话-FF6B6B?style=for-the-badge" alt="/arsave"></a>
   <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farstart-加载上下文-4ECDC4?style=for-the-badge" alt="/arstart"></a>
+</p>
+<p align="center">
+  <a href="#记忆如何复合增长"><img src="https://img.shields.io/badge/1-自动命名-5D34F2?style=for-the-badge" alt="自动命名"></a>
+  <a href="#记忆如何复合增长"><img src="https://img.shields.io/badge/2-索引-0EA5E9?style=for-the-badge" alt="索引"></a>
+  <a href="#记忆如何复合增长"><img src="https://img.shields.io/badge/3-关联性-10B981?style=for-the-badge" alt="关联性"></a>
+  <a href="#记忆如何复合增长"><img src="https://img.shields.io/badge/4-权重与衰减-F59E0B?style=for-the-badge" alt="权重与衰减"></a>
+  <a href="#记忆如何复合增长"><img src="https://img.shields.io/badge/5-反馈回路-EF4444?style=for-the-badge" alt="反馈回路"></a>
 </p>
 
 ## `/arsave` 和 `/arstart`

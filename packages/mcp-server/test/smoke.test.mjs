@@ -10,21 +10,22 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ENTRY = path.join(__dirname, "..", "dist", "index.js");
 
 describe("MCP server smoke tests", () => {
-  it("--list-tools outputs exactly 22 tools", async () => {
+  it("--list-tools outputs exactly 5 tools (v3.4 surface)", async () => {
     const { stdout } = await execFileAsync("node", [ENTRY, "--list-tools"]);
     const tools = JSON.parse(stdout);
-    assert.equal(tools.length, 22);
+    assert.equal(tools.length, 5);
     const names = tools.map((t) => t.name);
-    assert.ok(names.includes("journal_read"));
-    assert.ok(names.includes("palace_write"));
-    assert.ok(names.includes("awareness_update"));
-    assert.ok(names.includes("recall_insight"));
+    assert.ok(names.includes("session_start"));
+    assert.ok(names.includes("remember"));
+    assert.ok(names.includes("recall"));
+    assert.ok(names.includes("session_end"));
+    assert.ok(names.includes("check"));
   });
 
   it("--version prints a semver string", async () => {
     const { stdout } = await execFileAsync("node", [ENTRY, "--help"]);
     assert.ok(stdout.includes("agent-recall-mcp v"));
-    assert.ok(stdout.includes("3.3.10"));
+    assert.match(stdout, /v\d+\.\d+\.\d+/);
   });
 
   it("--help shows storage path and usage info", async () => {
@@ -34,16 +35,11 @@ describe("MCP server smoke tests", () => {
     assert.ok(stdout.includes("npx agent-recall-mcp"));
   });
 
-  it("tool names match expected set", async () => {
+  it("tool names match v3.4 primary surface", async () => {
     const { stdout } = await execFileAsync("node", [ENTRY, "--list-tools"]);
     const tools = JSON.parse(stdout);
     const expected = [
-      "journal_read", "journal_write", "journal_capture", "journal_list",
-      "journal_projects", "journal_search", "alignment_check", "nudge",
-      "context_synthesize", "journal_state", "journal_cold_start",
-      "journal_archive", "journal_rollup", "knowledge_write", "knowledge_read",
-      "palace_read", "palace_write", "palace_walk", "palace_lint",
-      "palace_search", "awareness_update", "recall_insight",
+      "session_start", "remember", "recall", "session_end", "check",
     ];
     for (const name of expected) {
       assert.ok(

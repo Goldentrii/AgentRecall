@@ -169,7 +169,7 @@ export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallR
         source: "journal",
         title,
         excerpt: r.excerpt,
-        score: recency * 0.50 + exactness * 0.30 + recency * 0.20,
+        score: recency * 0.60 + exactness * 0.40,
         date: r.date,
       });
     }

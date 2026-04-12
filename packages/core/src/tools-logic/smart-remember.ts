@@ -37,9 +37,11 @@ type Route = "journal_capture" | "palace_write" | "knowledge_write" | "awareness
 
 const ROUTE_SIGNALS: Record<Route, RegExp[]> = {
   knowledge_write: [
-    /\bbug\b/i, /\bfix\b/i, /\berror\b/i, /\broot cause\b/i, /\blesson\b/i,
-    /\bregression\b/i, /\bcrash\b/i, /\bworkaround\b/i, /\bwhat happened\b/i,
-    /\bbroke\b/i,
+    /\bbug\b/i, /\bfix(ed)?\b/i, /\berror\b/i, /\broot cause\b/i, /\blesson\b/i,
+    /\bregression\b/i, /\bcrash(ed)?\b/i, /\bworkaround\b/i, /\bwhat happened\b/i,
+    /\bbroke\b/i, /\bexception\b/i, /\btraceback\b/i, /\bstacktrace\b/i,
+    /\bthrew\b/i, /\bpanic\b/i, /\bfailed\b/i, /\bnull pointer\b/i,
+    /\bundefined\b.*\berror\b/i, /\btypeerror\b/i, /\battributeerror\b/i,
   ],
   awareness_update: [
     /\balways\b/i, /\bnever\b/i, /\bpattern\b/i, /\bacross projects\b/i,

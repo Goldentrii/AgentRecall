@@ -15,10 +15,33 @@ export interface JournalSearchResult {
   results: Array<{ date: string; section: string; excerpt: string; line: number }>;
 }
 
+/** Split query into keywords (length > 2) for keyword-based matching. */
+function queryKeywords(query: string): string[] {
+  return query.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+}
+
+/** Return true if line contains enough query keywords (threshold: ≥1 keyword match). */
+function lineMatchesQuery(line: string, keywords: string[]): boolean {
+  if (keywords.length === 0) return false;
+  const lineLower = line.toLowerCase();
+  return keywords.some((kw) => lineLower.includes(kw));
+}
+
+/** Find first keyword match position in line for excerpt anchoring. */
+function firstMatchIndex(line: string, keywords: string[]): number {
+  const lineLower = line.toLowerCase();
+  let first = line.length;
+  for (const kw of keywords) {
+    const idx = lineLower.indexOf(kw);
+    if (idx !== -1 && idx < first) first = idx;
+  }
+  return first;
+}
+
 export async function journalSearch(input: JournalSearchInput): Promise<JournalSearchResult> {
   const slug = await resolveProject(input.project);
   const dirs = journalDirs(slug);
-  const queryLower = input.query.toLowerCase();
+  const keywords = queryKeywords(input.query);
 
   const results: JournalSearchResult["results"] = [];
 
@@ -38,12 +61,12 @@ export async function journalSearch(input: JournalSearchInput): Promise<JournalS
           currentSection = line.slice(3).trim().toLowerCase().replace(/\s+/g, "_");
         }
         if (input.section && currentSection !== input.section.toLowerCase()) continue;
-        if (line.toLowerCase().includes(queryLower)) {
+        if (lineMatchesQuery(line, keywords)) {
           const dateMatch = file.match(/^(\d{4}-\d{2}-\d{2})/);
           const date = dateMatch ? dateMatch[1] : file;
-          const matchIdx = line.toLowerCase().indexOf(queryLower);
+          const matchIdx = firstMatchIndex(line, keywords);
           const start = Math.max(0, matchIdx - 40);
-          const end = Math.min(line.length, matchIdx + input.query.length + 40);
+          const end = Math.min(line.length, matchIdx + 80);
           let excerpt = line.slice(start, end).trim();
           if (start > 0) excerpt = "..." + excerpt;
           if (end < line.length) excerpt = excerpt + "...";
@@ -70,10 +93,10 @@ export async function journalSearch(input: JournalSearchInput): Promise<JournalS
           const lines = content.split("\n");
 
           for (let i = 0; i < lines.length; i++) {
-            if (lines[i].toLowerCase().includes(queryLower)) {
-              const matchIdx = lines[i].toLowerCase().indexOf(queryLower);
+            if (lineMatchesQuery(lines[i], keywords)) {
+              const matchIdx = firstMatchIndex(lines[i], keywords);
               const start = Math.max(0, matchIdx - 40);
-              const end = Math.min(lines[i].length, matchIdx + input.query.length + 40);
+              const end = Math.min(lines[i].length, matchIdx + 80);
               let excerpt = lines[i].slice(start, end).trim();
               if (start > 0) excerpt = "..." + excerpt;
               if (end < lines[i].length) excerpt = excerpt + "...";

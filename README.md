@@ -1,8 +1,8 @@
 <h1 align="center">AgentRecall</h1>
 
 <p align="center"><strong>Your agent doesn't just remember. It learns how you think.</strong></p>
-<p align="center">Your agent remembers yesterday, learns from corrections, and gets better at working with you over time.</p>
-<p align="center">Persistent, compounding memory + Intelligent Distance Protocol. MCP server + SDK + CLI.</p>
+<p align="center">Every correction saved is a mistake never repeated. Every insight compounded is tokens never wasted rebuilding context.</p>
+<p align="center">Persistent, compounding memory + automatic correction capture. MCP server + SDK + CLI.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/agent-recall-mcp"><img src="https://img.shields.io/npm/v/agent-recall-mcp?style=flat-square&label=MCP&color=5D34F2" alt="MCP npm"></a>
@@ -12,6 +12,8 @@
   <img src="https://img.shields.io/badge/MCP-5_tools-orange?style=flat-square" alt="Tools">
   <img src="https://img.shields.io/badge/cloud-zero-blue?style=flat-square" alt="Zero Cloud">
   <img src="https://img.shields.io/badge/Obsidian-compatible-7C3AED?style=flat-square" alt="Obsidian">
+  <img src="https://img.shields.io/badge/overhead-~831_tokens%2Fsession-22C55E?style=flat-square" alt="Token overhead">
+  <img src="https://img.shields.io/badge/saves-thousands_long--term-22C55E?style=flat-square" alt="Token savings">
 </p>
 
 <p align="center">
@@ -40,6 +42,11 @@
 <p align="center">
   <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farsave-Save_Session-FF6B6B?style=for-the-badge" alt="/arsave"></a>
   <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farstart-Load_Context-4ECDC4?style=for-the-badge" alt="/arstart"></a>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/AUTO-hook--start-8B5CF6?style=for-the-badge" alt="hook-start">
+  <img src="https://img.shields.io/badge/AUTO-hook--correction-F97316?style=for-the-badge" alt="hook-correction">
+  <img src="https://img.shields.io/badge/AUTO-hook--end-06B6D4?style=for-the-badge" alt="hook-end">
 </p>
 <p align="center">
   <a href="#how-memory-compounds"><img src="https://img.shields.io/badge/1-AUTO--NAMING-5D34F2?style=for-the-badge" alt="Auto-Naming"></a>
@@ -99,35 +106,35 @@ Session 1 (Tuesday)                          Session 2 (Wednesday, different age
 
 /arstart                                     /arstart
   │                                            │
-  ├─ palace_walk ──→ "monorepo project,        ├─ palace_walk ──→ loads Tuesday's
-  │                   SDK + CLI planned"        │                  architecture decisions
-  │                                            │                  in 200 tokens
-  ├─ recall_insight ──→ 3 prior lessons        ├─ recall_insight
-  │   • "structurize scattered input"          │   • "no version inflation"
-  │   • "search before building"               │   • "arsave/arstart = hero section"
-  │   • "ask when ambiguous"                   │
-  │                                            ├─ Continues exactly where
-  ▼                                            │  Session 1 left off
-Human: "we need SDK, CLI,                     │
-  update README, fix versions"                 ▼
-  │                                           Human: "publish to npm,
-  ├─ alignment_check                            update both GitHub repos"
-  │   confidence: medium                        │
-  │   4 tasks detected                          ├─ No re-explanation needed.
-  │   → present plan → human confirms           │   Agent already knows the
-  │                                             │   monorepo structure, package
-  ├─ Execute in order:                          │   names, and version policy.
-  │   1. Core extraction ✓                      │
-  │   2. Tool logic split ✓                     └─ Done in 2 minutes
-  │   3. MCP wrappers ✓                             (vs 20 min cold start
-  │   4. SDK + CLI ✓                                  without AgentRecall)
+  ├─ session_start() ──→ identity,             ├─ session_start() ──→ loads Tuesday's
+  │   top insights, active rooms,              │   decisions in ~400 tokens,
+  │   cross-project matches,                   │   watch_for: "structurize input"
+  │   watch_for warnings                       │
+  │                                            ├─ recall("SDK CLI monorepo") ──→
+  ├─ recall("SDK CLI versions") ──→            │   • "no version inflation"
+  │   • "structurize scattered input"          │   • "arsave/arstart = hero section"
+  │   • "search before building"               │
+  │   • "ask when ambiguous"                   ├─ Continues exactly where
+  │                                            │  Session 1 left off
+  ▼                                            │
+Human: "we need SDK, CLI,                     ▼
+  update README, fix versions"               Human: "publish to npm,
+  │                                           update both GitHub repos"
+  ├─ check(goal="SDK+CLI+README",             │
+  │   confidence="medium")                    ├─ No re-explanation needed.
+  │   → 4 tasks detected                      │   Agent already knows the
+  │   → present plan → human confirms         │   monorepo structure, package
+  │                                           │   names, and version policy.
+  ├─ Execute in order:                        │
+  │   1. Core extraction ✓                    └─ Done in 2 minutes
+  │   2. Tool logic split ✓                       (vs 20 min cold start
+  │   3. MCP wrappers ✓                             without AgentRecall)
+  │   4. SDK + CLI ✓
   │
 /arsave
   │
-  ├─ journal_write ──→ decisions + tasks saved
-  ├─ awareness_update ──→ "scattered input →
-  │                        structurize → confirm"
-  └─ palace_write ──→ architecture room updated
+  └─ session_end(summary, insights, trajectory)
+       → journal + awareness + palace — one call
 ```
 
 ---
@@ -320,10 +327,35 @@ ar rollup --min-age-days 14
 
 ## How an Agent Uses AgentRecall
 
+### Automatic (Zero Discipline — Hooks)
+
+Wire once in `~/.claude/settings.json`. Every session is captured automatically, even without `/arsave`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{
+      "command": "node ~/.local/share/npm/lib/node_modules/agent-recall-cli/dist/index.js hook-start 2>/dev/null || true"
+    }],
+    "UserPromptSubmit": [{
+      "command": "node ~/.local/share/npm/lib/node_modules/agent-recall-cli/dist/index.js hook-correction 2>/dev/null || true"
+    }],
+    "Stop": [{
+      "command": "node ~/.local/share/npm/lib/node_modules/agent-recall-cli/dist/index.js hook-end 2>/dev/null || true"
+    }]
+  }
+}
+```
+
+- **hook-start** — on every session open: prints identity + top insights + watch_for warnings
+- **hook-correction** — on every prompt: detects corrections (regex) and captures them silently  
+- **hook-end** — on every session close: appends a lightweight end-of-session log entry
+
 ### Session Start (`/arstart`)
 ```
 session_start()  → identity, insights, active rooms, cross-project matches,
                    recent journal briefs, watch_for warnings — all in one call
+recall(query)    → surface task-specific past knowledge from all stores
 ```
 
 ### During Work
@@ -407,7 +439,7 @@ Agent writes: "JWT refresh rotation prevents session fixation"
   → Auto-edge created: architecture ←→ knowledge (weight 0.3)
 ```
 
-When you `recall("session security")`, the system doesn't just keyword-match — it follows edges 1 hop and surfaces related memories from connected rooms. Relativity turns isolated memories into a knowledge graph.
+When you `recall("session security")`, the system surfaces keyword-matched memories across connected rooms. Edges are stored in `graph.json` and are available for traversal — relativity turns isolated memories into a knowledge graph.
 
 ### 4. Weight + Decay
 
@@ -529,7 +561,7 @@ await memory.awarenessUpdate([{
 The `agent-recall-cli` package provides the `ar` command for terminal workflows, CI pipelines, and quick access to your agent's memory outside of an editor.
 
 ```
-ar v3.3.4 — AgentRecall CLI
+ar v3.3.12 — AgentRecall CLI
 
 JOURNAL:
   ar read [--date YYYY-MM-DD] [--section <name>]
@@ -561,6 +593,11 @@ META:
   ar synthesize [--entries N]
   ar knowledge write --category <cat> --title "t" --what "w" --cause "c" --fix "f"
   ar knowledge read [--category <cat>]
+
+HOOKS (auto-wired via settings.json — zero discipline required):
+  ar hook-start      # SessionStart: prints identity + insights + watch_for
+  ar hook-correction # UserPromptSubmit: silently captures corrections from prompt
+  ar hook-end        # Stop: appends end-of-session log entry
 
 GLOBAL FLAGS:
   --root <path>     Storage root (default: ~/.agent-recall)
@@ -599,17 +636,21 @@ L5: Insight Index      recall_insight            "cross-project experience"
 ~/.agent-recall/
   awareness.md                    # 200-line compounding document (global)
   awareness-state.json            # Structured awareness data
+  awareness-archive.json          # Demoted insights (preserved, not deleted)
   insights-index.json             # Cross-project insight matching
   projects/
     <project>/
       journal/
         YYYY-MM-DD.md             # Daily journal
-        YYYY-MM-DD-log.md         # L1 captures
+        YYYY-MM-DD-log.md         # L1 captures (hook-start/hook-end entries)
         YYYY-MM-DD.state.json     # JSON state
+        index.jsonl               # Fast machine-scannable index of all entries
       palace/
         identity.md               # ~50 token project identity card
         palace-index.json          # Room catalog + salience scores
-        graph.json                 # Cross-reference edges
+        graph.json                 # Cross-reference edges (relativity)
+        feedback-log.json          # Per-query feedback scores (recall learning)
+        alignment-log.json         # Past corrections for watch_for patterns
         rooms/
           goals/                   # Active goals, evolution
           architecture/            # Technical decisions, patterns
@@ -693,6 +734,11 @@ MIT License.
   <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farstart-加载上下文-4ECDC4?style=for-the-badge" alt="/arstart"></a>
 </p>
 <p align="center">
+  <img src="https://img.shields.io/badge/自动-hook--start-8B5CF6?style=for-the-badge" alt="hook-start">
+  <img src="https://img.shields.io/badge/自动-hook--correction-F97316?style=for-the-badge" alt="hook-correction">
+  <img src="https://img.shields.io/badge/自动-hook--end-06B6D4?style=for-the-badge" alt="hook-end">
+</p>
+<p align="center">
   <a href="#记忆如何复合增长"><img src="https://img.shields.io/badge/1-自动命名-5D34F2?style=for-the-badge" alt="自动命名"></a>
   <a href="#记忆如何复合增长"><img src="https://img.shields.io/badge/2-索引-0EA5E9?style=for-the-badge" alt="索引"></a>
   <a href="#记忆如何复合增长"><img src="https://img.shields.io/badge/3-关联性-10B981?style=for-the-badge" alt="关联性"></a>
@@ -750,10 +796,11 @@ curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentr
 
 /arstart                                     /arstart
   │                                            │
-  ├─ palace_walk ──→ "单仓项目，               ├─ palace_walk ──→ 200 token
-  │                   计划构建 SDK + CLI"       │                  加载周二的架构决策
+  ├─ session_start() ──→ 身份 + 洞察           ├─ session_start() ──→ 加载周二
+  │   活跃房间 + 跨项目匹配                    │   架构决策（约 400 token），
+  │   watch_for 警告                           │   watch_for: "结构化输入"
   │                                            │
-  ├─ recall_insight ──→ 3 条历史教训            ├─ recall_insight
+  ├─ recall("SDK CLI 版本") ──→               ├─ recall("SDK CLI 单仓") ──→
   │   • "结构化分散的输入"                     │   • "不要版本膨胀"
   │   • "先搜索再构建"                         │   • "arsave 放在最显眼的位置"
   │   • "模糊时询问，明确时执行"               │
@@ -762,8 +809,8 @@ curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentr
 人类："我们需要 SDK、CLI，                     │
   更新 README，修复版本号"                     ▼
   │                                           人类："发布到 npm，
-  ├─ alignment_check                            更新两个 GitHub 仓库"
-  │   confidence: medium                        │
+  ├─ check(goal="SDK+CLI+README",              更新两个 GitHub 仓库"
+  │   confidence="medium")                     │
   │   检测到 4 个任务项                         ├─ 无需重新解释。
   │   → 呈现方案 → 人类确认                    │   智能体已经知道单仓结构、
   │                                             │   包名和版本策略。
@@ -775,10 +822,8 @@ curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentr
   │
 /arsave
   │
-  ├─ journal_write ──→ 决策 + 任务已保存
-  ├─ awareness_update ──→ "分散输入 →
-  │                        结构化 → 确认 → 执行"
-  └─ palace_write ──→ architecture 房间已更新
+  └─ session_end(summary, insights, trajectory)
+       → 日志 + 感知 + 宫殿 — 一次调用全部完成
 ```
 
 ---

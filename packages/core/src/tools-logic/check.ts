@@ -18,6 +18,8 @@ import {
   type WatchForPattern,
 } from "../helpers/alignment-patterns.js";
 import { awarenessUpdate } from "./awareness-update.js";
+import { palaceDir } from "../storage/paths.js";
+import { listRooms } from "../palace/rooms.js";
 
 export interface CheckInput {
   goal: string;
@@ -76,10 +78,11 @@ export async function check(input: CheckInput): Promise<CheckResult> {
   const trimmed = log.slice(-50);
   writeAlignmentLog(slug, trimmed);
 
-  // 2. Find similar past goals (keyword overlap)
+  // 2. Find similar past goals — check BOTH alignment-log AND palace alignment room
   const goalKeywords = extractKeywords(input.goal, 5);
   const similarDeltas: PastDelta[] = [];
 
+  // 2a. From alignment-log.json
   for (const past of trimmed.slice(0, -1)) {
     if (!past.delta && !past.corrections?.length) continue;
 
@@ -93,6 +96,54 @@ export async function check(input: CheckInput): Promise<CheckResult> {
         delta: (past.delta ?? past.corrections?.join("; ") ?? "").slice(0, 120),
       });
     }
+  }
+
+  // 2b. From palace alignment room — rich correction history agents store there
+  try {
+    const pd = palaceDir(slug);
+    const rooms = listRooms(slug);
+    const alignmentRoom = rooms.find((r) => r.name.toLowerCase() === "alignment" || r.slug === "alignment");
+    if (alignmentRoom) {
+      const alignRoomPath = path.join(pd, "rooms", alignmentRoom.slug);
+      if (fs.existsSync(alignRoomPath)) {
+        const files = fs.readdirSync(alignRoomPath).filter((f) => f.endsWith(".md") && f !== "README.md" && f !== "_room.json");
+        for (const file of files) {
+          const content = fs.readFileSync(path.join(alignRoomPath, file), "utf-8");
+          // Parse entries: ### DATE — CONFIDENCE blocks with Goal + Human correction
+          const entryPattern = /###\s+(\d{4}-\d{2}-\d{2})[^\n]*\n([\s\S]*?)(?=###|\s*$)/g;
+          let match: RegExpExecArray | null;
+          while ((match = entryPattern.exec(content)) !== null) {
+            const date = match[1];
+            const block = match[2];
+            const goalMatch = block.match(/\*\*Goal\*\*:\s*(.+)/);
+            const correctionMatch = block.match(/\*\*Human correction\*\*:\s*([\s\S]+?)(?=\*\*|$)/);
+            const deltaMatch = block.match(/\*\*Delta\*\*:\s*([\s\S]+?)(?=\*\*|$)/);
+            if (!goalMatch) continue;
+
+            const pastGoal = goalMatch[1].trim();
+            const correction = correctionMatch?.[1].trim() ?? "";
+            const delta = deltaMatch?.[1].trim() ?? correction;
+            if (!delta) continue;
+
+            const pastKeywords = extractKeywords(pastGoal, 5);
+            const overlap = goalKeywords.filter((k) => pastKeywords.some((pk) => pk.includes(k) || k.includes(pk)));
+            // Also check if goal keywords appear in the correction text (broader match)
+            const correctionKeywords = extractKeywords(delta, 5);
+            const correctionOverlap = goalKeywords.filter((k) => correctionKeywords.some((ck) => ck.includes(k) || k.includes(ck)));
+
+            if (overlap.length >= 1 || correctionOverlap.length >= 2) {
+              similarDeltas.push({
+                date,
+                goal: pastGoal.slice(0, 80),
+                delta: delta.slice(0, 200),
+              });
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // Palace alignment room is optional
   }
 
   // 3. Extract patterns using shared helper

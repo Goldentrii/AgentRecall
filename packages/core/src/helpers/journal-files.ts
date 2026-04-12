@@ -123,4 +123,39 @@ export function updateIndex(project: string): void {
   }
 
   fs.writeFileSync(indexPath, index, "utf-8");
+
+  // Also write index.jsonl — one JSON object per entry for fast machine scanning
+  updateJsonlIndex(project, entries);
+}
+
+/**
+ * Write index.jsonl alongside index.md.
+ * Agents can scan this in ~100 tokens to find the right entry to read,
+ * instead of parsing the markdown table.
+ */
+function updateJsonlIndex(project: string, entries: JournalEntry[]): void {
+  const dir = journalDir(project);
+  const jsonlPath = path.join(dir, "index.jsonl");
+
+  const lines: string[] = [];
+  for (const entry of entries) {
+    const content = fs.readFileSync(
+      path.join(entry.dir, entry.file),
+      "utf-8"
+    );
+    const title = extractTitle(content);
+    const momentum = extractMomentum(content);
+    // Extract first non-heading, non-empty line as summary
+    let summary = "";
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith("#") && !trimmed.startsWith("---") && !trimmed.startsWith(">")) {
+        summary = trimmed.slice(0, 120);
+        break;
+      }
+    }
+    lines.push(JSON.stringify({ date: entry.date, title, summary, momentum }));
+  }
+
+  fs.writeFileSync(jsonlPath, lines.join("\n") + "\n", "utf-8");
 }

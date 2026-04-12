@@ -45,12 +45,15 @@ export function extractWatchPatterns(records: AlignmentRecord[], limit: number =
   }
 
   const patterns: WatchForPattern[] = [];
-  for (const [key, { count, examples }] of correctionCounts) {
+  for (const [, { count, examples }] of correctionCounts) {
     if (count >= 2) {
+      // Use the actual correction text as the pattern, not the keyword key
+      // The keyword key is only for grouping — not meaningful to display
+      const displayText = examples[0].slice(0, 80);
       patterns.push({
-        pattern: `Recurring correction: ${key} (${examples[0]})`,
+        pattern: displayText,
         frequency: count,
-        suggestion: `Ask the human to clarify "${key}" — corrected ${count} times.`,
+        suggestion: `Corrected ${count} times — review your approach before proceeding`,
       });
     }
   }

@@ -497,7 +497,9 @@ async function main(): Promise<void> {
             goal: lastGoal || "Unknown — see correction",
             confidence: "high",
             human_correction: prompt.slice(0, 200),
-            delta: `Human corrected agent. Goal context: "${lastGoal.slice(0, 80)}"`,
+            // Delta describes the gap using actual content so keyword grouping
+            // produces meaningful topics (e.g. "deploy-vercel") not "human-corrected"
+            delta: `${lastGoal ? `Was: "${lastGoal.slice(0, 60)}"` : "Unknown context"} | Correction: "${prompt.slice(0, 80)}"`,
             project,
           });
           // Silent — no stdout output, correction captured in alignment-log

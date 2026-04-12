@@ -36,14 +36,29 @@ export async function sessionStart(input: SessionStartInput): Promise<SessionSta
   const slug = await resolveProject(input.project);
   ensurePalaceInitialized(slug);
 
-  // 1. Identity — first 2 lines only
+  // 1. Identity — first meaningful lines, skipping YAML frontmatter keys and empty template stubs
   const rawIdentity = readIdentity(slug);
-  const identityLines = rawIdentity.split("\n").filter((l) => l.trim() && !l.startsWith("---") && !l.startsWith(">"));
-  const identity = identityLines.slice(0, 2).join(" ").trim() || slug;
+  const identityLines = rawIdentity.split("\n").filter((l) => {
+    const t = l.trim();
+    if (!t) return false;
+    if (t.startsWith("---")) return false;
+    if (t.startsWith(">")) return false;
+    // Skip raw YAML frontmatter key-value lines like "project: foo" or "created: ..."
+    if (/^[a-z_]+:\s/.test(t)) return false;
+    // Skip unfilled template stubs
+    if (t.startsWith("_(fill in")) return false;
+    return true;
+  });
+  const identity = identityLines.slice(0, 2).map((l) => l.trim().replace(/^#+\s*/, "")).join(" ").trim() || slug;
 
-  // 2. Top insights from awareness state (compact, no full markdown dump)
+  // 2. Top insights from awareness state — sort by confirmations DESC, recency DESC
   const state = readAwarenessState();
-  const insights = (state?.topInsights ?? []).slice(0, 5).map((i) => ({
+  const sortedInsights = (state?.topInsights ?? []).slice().sort((a, b) => {
+    if (b.confirmations !== a.confirmations) return b.confirmations - a.confirmations;
+    // Tiebreak: most recently confirmed first
+    return (b.lastConfirmed ?? "").localeCompare(a.lastConfirmed ?? "");
+  });
+  const insights = sortedInsights.slice(0, 5).map((i) => ({
     title: i.title.slice(0, 80),
     confirmed: i.confirmations ?? 1,
     severity: "important",

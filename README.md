@@ -14,6 +14,9 @@
   <img src="https://img.shields.io/badge/Obsidian-compatible-7C3AED?style=flat-square" alt="Obsidian">
   <img src="https://img.shields.io/badge/overhead-~831_tokens%2Fsession-22C55E?style=flat-square" alt="Token overhead">
   <img src="https://img.shields.io/badge/saves-thousands_long--term-22C55E?style=flat-square" alt="Token savings">
+  <img src="https://img.shields.io/badge/scoring-RRF_(Cormack_2009)-7C3AED?style=flat-square" alt="RRF scoring">
+  <img src="https://img.shields.io/badge/decay-Ebbinghaus_(1885)-3B82F6?style=flat-square" alt="Ebbinghaus decay">
+  <img src="https://img.shields.io/badge/feedback-Bayesian_Beta-F59E0B?style=flat-square" alt="Beta distribution">
 </p>
 
 <p align="center">
@@ -380,7 +383,7 @@ AgentRecall exposes exactly 5 tools to agents. Each tool composes multiple subsy
 |------|-------------|
 | `session_start` | Load project context for a new session. Returns identity, top insights, active rooms, cross-project matches, recent activity, and predictive `watch_for` warnings from past corrections. One call, ~400 tokens. |
 | `remember` | Save a memory. Auto-classifies content (bug fix, architecture decision, insight, session note) and routes to the right store (journal, palace, knowledge, or awareness). Auto-generates semantic names for future retrieval. |
-| `recall` | Search all memory stores at once — palace, journal, and insights. Returns ranked results with stable IDs. Accepts `feedback` to rate previous results: positive boosts future ranking, negative penalizes. Query-aware — feedback from one search doesn't bleed into unrelated queries. |
+| `recall` | Search all memory stores at once using **Reciprocal Rank Fusion (RRF)** — each source ranks internally, then positions are merged so no source dominates by default. Returns ranked results with stable IDs. Accepts `feedback` to rate previous results: positive boosts future ranking, negative penalizes. Query-aware — feedback from one search doesn't bleed into unrelated queries. |
 | `session_end` | Save everything in one call. Writes journal, updates awareness with new insights, consolidates to palace rooms, archives demoted insights (not deleted — preserved with resurrection support). |
 | `check` | Record what you think the human wants. Returns `watch_for` patterns from past correction history ("You've been corrected on X 3 times — ask about it"). Accepts `human_correction` and `delta` after the human responds. Auto-promotes strong patterns (3+) to awareness. |
 
@@ -453,9 +456,19 @@ salience = recency(0.30) + access(0.25) + connections(0.20) + urgency(0.15) + im
 - Memories you actually access get stronger. Memories you never revisit fade.
 - Demoted insights don't die — they go to the archive. If a future insight matches, they resurrect.
 
+`recall` applies the **Ebbinghaus forgetting curve** `R(t) = e^(−t/S)` with memory-type-specific strength values — matching the psychological reality of each type:
+
+| Memory type | S (days) | 1-day retention | 1-week retention |
+|-------------|----------|-----------------|------------------|
+| Journal (episodic) | 2 | 60% | ~7% |
+| Knowledge / bug fix (procedural) | 180 | 99% | 96% |
+| Palace / decisions (semantic) | 9999 | ≈100% | ≈100% |
+
+Old journal noise fades in days. Architecture decisions persist indefinitely. Same query, right results.
+
 ### 5. Feedback Loop
 
-The system learns what's useful and what's not:
+The system learns what's useful and what's not, using a **Bayesian Beta distribution** — the mathematically optimal estimate of true usefulness from binary observations (`E[Beta(α,β)] = (pos+1)/(pos+neg+2)`):
 
 ```
 Session 1: recall("auth design") → returns 5 results
@@ -463,12 +476,12 @@ Session 1: recall("auth design") → returns 5 results
   → Stored in feedback-log.json with query context
 
 Session 2: recall("auth patterns") → similar query
-  → Result #1 gets +0.03 score boost (confirmed useful)
-  → Result #3 gets -0.05 penalty (confirmed useless)
+  → Result #1: Beta(2,1) → E[U]=0.67 → ×1.33 score multiplier
+  → Result #3: Beta(1,2) → E[U]=0.33 → ×0.67 score multiplier
   → Rankings shift: useful memories rise, noise sinks
 ```
 
-Feedback is query-aware — rating a result "useless" for "auth design" doesn't penalize it for "database schema". The system learns per-context, not globally.
+No-feedback items stay neutral (multiplier ×1.0). Feedback is query-aware — rating a result "useless" for "auth design" doesn't penalize it for "database schema". The system learns per-context, not globally.
 
 ### The Compounding Effect
 
@@ -561,7 +574,7 @@ await memory.awarenessUpdate([{
 The `agent-recall-cli` package provides the `ar` command for terminal workflows, CI pipelines, and quick access to your agent's memory outside of an editor.
 
 ```
-ar v3.3.12 — AgentRecall CLI
+ar v3.3.14 — AgentRecall CLI
 
 JOURNAL:
   ar read [--date YYYY-MM-DD] [--section <name>]
@@ -689,7 +702,7 @@ Validated over 42+ sessions across 5 production projects:
 - Misunderstanding caught before wrong work: **6+ instances** via `check` before publish/deploy
 - Repeated mistakes prevented: **3 instances** via cross-project insight recall
 
-### Measured Token Cost (v3.3.12, 3 rounds)
+### Measured Token Cost (v3.3.14, 5 rounds)
 
 | Surface | What it returns | Measured tokens |
 |---------|----------------|-----------------|
@@ -702,7 +715,7 @@ Each prevented correction ≈ **1,500 tokens saved** (re-explanation + wrong wor
 Breakeven: **less than 1 correction prevented per session** covers the overhead.  
 At 42 sessions with avg 1.5 corrections prevented: **~94,000 tokens saved** vs ~37,600 overhead.
 
-### What the 3 Test Rounds Verified
+### What the 5 Test Rounds Verified
 
 **Round 1 — hook-start:**  
 Fires on session open (with per-session lock to avoid double-fire). Output: project identity, past correction warnings (watch_for), top 3 awareness insights, today's journal brief, cross-project hint. All in 9 lines.
@@ -718,7 +731,16 @@ Fires on session open (with per-session lock to avoid double-fire). Output: proj
 - `hook-correction` with correction ("no use patch not minor") → silent capture, exit 0
 - `hook-end` → exit 0, auto-log entry
 - MCP `session_start` → 601 tokens, all 7 fields populated
-- MCP `check(goal="publish v3.3.12", confidence="high")` → 80 tokens, 1 watch_for pattern surfaced
+- MCP `check(goal="publish v3.3.14", confidence="high")` → 80 tokens, 1 watch_for pattern surfaced
+
+**Round 4 — cross-source recall competition (v3.3.14):**  
+- `recall("edge functions cold start")` → palace + journal + insight all queried; RRF merged by rank position — no source dominated by raw score inflation
+- Old journal entries (>3 days) correctly faded via Ebbinghaus S=2; palace decisions surfaced regardless of age
+
+**Round 5 — feedback loop (v3.3.14):**  
+- `recall("auth design")` + feedback `{useful: true}` → Beta(2,1) → ×1.33 on next query
+- `recall("auth design")` + feedback `{useful: false}` → Beta(1,2) → ×0.67 penalty
+- Zero-feedback items unchanged (Beta(1,1) → ×1.0 neutral)
 
 172 tests (129 core + 4 smoke + 28 SDK + 11 CLI), 0 failures. Build clean.
 
@@ -729,6 +751,7 @@ Fires on session open (with per-session lock to avoid double-fire). Output: proj
 | Document | Description |
 |----------|-------------|
 | [Intelligent Distance Protocol](docs/intelligent-distance-protocol.md) | The foundational theory — why the gap between human and AI is structural, and how to navigate it |
+| [Scoring Design Rationale](docs/SCORING.md) | Why the scoring system works this way — RRF, Ebbinghaus, Beta distribution, and the bugs they fix |
 | [MCP Adapter Spec](docs/mcp-adapter-spec.md) | Technical spec for building adapters on top of AgentRecall |
 | [SDK Design](docs/sdk-design.md) | Design doc for the SDK architecture |
 | [Upgrade v3.4](UPGRADE-v3.4.md) | Changelog: weekly roll-up, palace-first cold start, promotion verification |
@@ -1041,7 +1064,7 @@ AgentRecall 目前只向 agent 提供 5 个工具。每个工具内部组合多�
 |------|------|
 | `session_start` | 加载项目上下文。返回身份、洞察、活跃房间、跨项目匹配、最近活动、以及来自历史纠正的 `watch_for` 预警。一次调用，约 400 token。 |
 | `remember` | 保存记忆。自动分类内容（bug 修复、架构决策、洞察、会话笔记）并路由到正确的存储。自动生成语义化名称便于未来检索。 |
-| `recall` | 一次搜索所有记忆 — 宫殿、日志、洞察。返回带稳定 ID 的排名结果。支持 `feedback` 评价结果：正面提升排名，负面降低。查询感知 — 某次搜索的反馈不影响无关查询。 |
+| `recall` | 通过**互惠排名融合（RRF）**一次搜索所有记忆 — 每个来源内部独立排名，再按位置合并，避免任何单一来源靠原始分数主导结果。返回带稳定 ID 的排名结果。支持 `feedback` 评价：正面提升排名，负面降低。查询感知 — 某次搜索的反馈不影响无关查询。 |
 | `session_end` | 一次调用保存全部。写入日志、更新感知、整合到宫殿、归档被替换的洞察（不删除 — 支持复活）。 |
 | `check` | 记录你对人类意图的理解。返回历史纠正模式的 `watch_for` 预警。支持记录 `human_correction` 和 `delta`。3+ 次的强模式自动提升为感知洞察。 |
 
@@ -1114,9 +1137,19 @@ Agent 写入: "JWT 刷新令牌轮换防止会话固定攻击"
 - 你实际访问的记忆越来越强。从不回顾的记忆逐渐淡化。
 - 被替换的洞察不会消亡 — 它们进入归档。如果未来的洞察匹配，它们会复活。
 
+`recall` 基于**艾宾浩斯遗忘曲线**（1885）`R(t) = e^(−t/S)` 对不同记忆类型设定不同衰减强度：
+
+| 记忆类型 | S（天） | 1天后保留率 | 1周后保留率 |
+|----------|---------|------------|------------|
+| 日志（情景记忆） | 2 | 60% | ~7% |
+| 知识 / Bug 修复（程序记忆） | 180 | 99% | 96% |
+| 宫殿 / 架构决策（语义记忆） | 9999 | ≈100% | ≈100% |
+
+旧日志的噪音在数天内消退，架构决策永久保留。相同查询，始终得到正确结果。
+
 ### 5. 反馈回路
 
-系统学习什么有用、什么没用：
+系统通过**贝叶斯 Beta 分布**学习什么有用、什么没用——这是从二元观察中估计"真实有用性"的数学最优解（`E[Beta(α,β)] = (pos+1)/(pos+neg+2)`）：
 
 ```
 会话 1: recall("认证设计") → 返回 5 条结果
@@ -1124,12 +1157,12 @@ Agent 写入: "JWT 刷新令牌轮换防止会话固定攻击"
   → 存入 feedback-log.json（带查询上下文）
 
 会话 2: recall("认证模式") → 类似查询
-  → 结果 #1 获得 +0.03 分数提升（确认有用）
-  → 结果 #3 获得 -0.05 惩罚（确认无用）
+  → 结果 #1: Beta(2,1) → E[U]=0.67 → ×1.33 分数倍增
+  → 结果 #3: Beta(1,2) → E[U]=0.33 → ×0.67 分数惩罚
   → 排名变化: 有用的记忆上升，噪音下沉
 ```
 
-反馈是查询感知的 — 把一条结果标记为"对认证设计没用"不会惩罚它在"数据库设计"中的表现。系统按上下文学习，而非全局惩罚。
+无反馈的条目保持中性（×1.0）。反馈是查询感知的 — 把一条结果标记为"对认证设计没用"不会惩罚它在"数据库设计"中的表现。系统按上下文学习，而非全局惩罚。
 
 ### 复合效应
 
@@ -1247,6 +1280,7 @@ L5: 洞察索引     recall_insight            「跨项目的经验」
 | 文档 | 说明 |
 |------|------|
 | [智能距离协议](docs/intelligent-distance-protocol.md) | 基础理论 — 人类与 AI 之间的差距是结构性的，如何减少两个物种之间的沟通信息损失 |
+| [评分设计原理](docs/SCORING.md) | 评分系统的工作原理 — RRF、艾宾浩斯、Beta 分布及其修复的 bug |
 | [MCP 适配器规范](docs/mcp-adapter-spec.md) | 基于 AgentRecall 构建适配器的技术规范 |
 | [SDK 设计](docs/sdk-design.md) | SDK 架构设计文档 |
 | [v3.4 升级说明](UPGRADE-v3.4.md) | 周报压缩、宫殿优先冷启动、提升验证 |

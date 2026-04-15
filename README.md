@@ -44,8 +44,9 @@
 ---
 
 <p align="center">
-  <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farsave-Save_Session-FF6B6B?style=for-the-badge" alt="/arsave"></a>
-  <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farstart-Load_Context-4ECDC4?style=for-the-badge" alt="/arstart"></a>
+  <a href="#arsave-arstart-and-arsaveall"><img src="https://img.shields.io/badge/%2Farsave-Save_Session-FF6B6B?style=for-the-badge" alt="/arsave"></a>
+  <a href="#arsave-arstart-and-arsaveall"><img src="https://img.shields.io/badge/%2Farstart-Load_Context-4ECDC4?style=for-the-badge" alt="/arstart"></a>
+  <a href="#arsave-arstart-and-arsaveall"><img src="https://img.shields.io/badge/%2Farsaveall-Batch_Save_All-FFD93D?style=for-the-badge" alt="/arsaveall"></a>
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/AUTO-hook--start-8B5CF6?style=for-the-badge" alt="hook-start">
@@ -60,22 +61,26 @@
   <a href="#how-memory-compounds"><img src="https://img.shields.io/badge/5-FEEDBACK_LOOP-EF4444?style=for-the-badge" alt="Feedback Loop"></a>
 </p>
 
-## `/arsave` and `/arstart`
+## `/arsave`, `/arstart`, and `/arsaveall`
 
-> **Two commands. That's all you need.**
+> **Three commands. That's all you need.**
 
 | Command | When | What it does |
 |---------|------|-------------|
-| **`/arsave`** | End of session | Write journal + consolidate to palace + update awareness + optional git push |
+| **`/arsave`** | End of session | Write journal + consolidate to palace + update awareness |
 | **`/arstart`** | Start of session | Recall cross-project insights + walk palace + load context |
+| **`/arsaveall`** | End of day (multi-session) | **Batch save all parallel sessions at once** — scan, merge, deduplicate, done |
 
-Type `/arsave` after a long project session. Everything gets saved. Type `/arstart` next time. Everything loads back.
+Type `/arsave` after a single session. Type `/arstart` next time. Everything loads back.
+
+**Running 5 agents in parallel?** Don't `/arsave` five times. Type **`/arsaveall`** once — it scans all of today's sessions across all projects, merges them into consolidated journals, deduplicates insights, and updates awareness in one shot. Each session writes to its own file (session-ID scoped), so **no conflicts, no data loss, no matter how many windows you have open.**
 
 ```bash
 # Install commands (one-time, Claude Code only)
 mkdir -p ~/.claude/commands
 curl -o ~/.claude/commands/arsave.md https://raw.githubusercontent.com/Goldentrii/AgentRecall/main/commands/arsave.md
 curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentrii/AgentRecall/main/commands/arstart.md
+curl -o ~/.claude/commands/arsaveall.md https://raw.githubusercontent.com/Goldentrii/AgentRecall/main/commands/arsaveall.md
 ```
 
 ### The Difference
@@ -90,6 +95,19 @@ Day 2: "What monorepo?"               Day 2: /arstart
   → Agent repeats same mistakes          → Knows "no version inflation"
   → Forgets your priorities              → Knows "arsave = hero section"
   → Misses half the tasks                → Pushes to both repos
+```
+
+```
+WITHOUT AgentRecall (5 parallel agents)      WITH AgentRecall (5 parallel agents)
+──────────────────────────────────────       ────────────────────────────────────
+
+Agent 1 finishes: you /arsave                Agent 1-5 finish: you type /arsaveall once
+Agent 2 finishes: you /arsave again            → Scans all 5 sessions automatically
+Agent 3 finishes: you /arsave again            → Merges into consolidated journals
+Agent 4 finishes: you /arsave again            → Deduplicates insights across sessions
+Agent 5 finishes: you /arsave again            → Zero conflicts (session-ID scoped files)
+  → 5x the work, corrections lost             → One command, everything saved
+  → Agent 3's correction unknown to Agent 5    → All agents share the same memory
 ```
 
 ### Three Layers of Value
@@ -804,8 +822,9 @@ MIT License.
 ---
 
 <p align="center">
-  <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farsave-保存会话-FF6B6B?style=for-the-badge" alt="/arsave"></a>
-  <a href="#arsave-and-arstart"><img src="https://img.shields.io/badge/%2Farstart-加载上下文-4ECDC4?style=for-the-badge" alt="/arstart"></a>
+  <a href="#arsave-arstart-和-arsaveall"><img src="https://img.shields.io/badge/%2Farsave-保存会话-FF6B6B?style=for-the-badge" alt="/arsave"></a>
+  <a href="#arsave-arstart-和-arsaveall"><img src="https://img.shields.io/badge/%2Farstart-加载上下文-4ECDC4?style=for-the-badge" alt="/arstart"></a>
+  <a href="#arsave-arstart-和-arsaveall"><img src="https://img.shields.io/badge/%2Farsaveall-批量保存-FFD93D?style=for-the-badge" alt="/arsaveall"></a>
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/自动-hook--start-8B5CF6?style=for-the-badge" alt="hook-start">
@@ -820,22 +839,26 @@ MIT License.
   <a href="#记忆如何复合增长"><img src="https://img.shields.io/badge/5-反馈回路-EF4444?style=for-the-badge" alt="反馈回路"></a>
 </p>
 
-## `/arsave` 和 `/arstart`
+## `/arsave`、`/arstart` 和 `/arsaveall`
 
-> **两个命令，ezpz。**
+> **三个命令，搞定一切。**
 
 | 命令 | 时机 | 功能 |
 |------|------|------|
-| **`/arsave`** | 会话结束时 | 写入日志 + 整合到记忆宫殿 + 更新感知 + 可选 git 推送 |
+| **`/arsave`** | 会话结束时 | 写入日志 + 整合到记忆宫殿 + 更新感知 |
 | **`/arstart`** | 会话开始时 | 召回跨项目洞察 + 遍历宫殿 + 加载上下文 |
+| **`/arsaveall`** | 一天结束时（多会话） | **一次性批量保存所有并行会话** — 扫描、合并、去重、完成 |
 
-会话结束时输入 `/arsave`，所有内容自动保存。下次开始时输入 `/arstart`，所有上下文自动恢复。
+单个会话结束时输入 `/arsave`。下次开始时输入 `/arstart`，所有上下文自动恢复。
+
+**同时跑了 5 个 agent？** 不需要 `/arsave` 五次。输入一次 **`/arsaveall`** — 它会自动扫描今天所有项目的所有会话，合并为整合日志，跨会话去重洞察，一次性更新感知系统。每个会话写入独立文件（session-ID 隔离），所以**无论开多少窗口，零冲突、零数据丢失。**
 
 ```bash
 # 安装命令（一次性，仅 Claude Code）
 mkdir -p ~/.claude/commands
 curl -o ~/.claude/commands/arsave.md https://raw.githubusercontent.com/Goldentrii/AgentRecall/main/commands/arsave.md
 curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentrii/AgentRecall/main/commands/arstart.md
+curl -o ~/.claude/commands/arsaveall.md https://raw.githubusercontent.com/Goldentrii/AgentRecall/main/commands/arsaveall.md
 ```
 
 ### 效果对比
@@ -850,6 +873,19 @@ curl -o ~/.claude/commands/arstart.md https://raw.githubusercontent.com/Goldentr
   → 智能体重复同样的错误                  → 知道"不要版本膨胀"
   → 忘记你的优先级                        → 知道"arsave 要放首位"
   → 遗漏一半的任务                        → 自动推送两个仓库
+```
+
+```
+没有 AgentRecall（5 个并行 agent）        有 AgentRecall（5 个并行 agent）
+──────────────────────────────           ──────────────────────────────
+
+Agent 1 完成：你 /arsave                  Agent 1-5 全部完成：你输入一次 /arsaveall
+Agent 2 完成：再 /arsave                    → 自动扫描全部 5 个会话
+Agent 3 完成：再 /arsave                    → 合并为整合日志
+Agent 4 完成：再 /arsave                    → 跨会话去重洞察
+Agent 5 完成：再 /arsave                    → 零冲突（session-ID 隔离文件）
+  → 5 倍工作量，纠正丢失                   → 一个命令，全部保存
+  → Agent 3 的纠正 Agent 5 不知道          → 所有 agent 共享同一份记忆
 ```
 
 ### 三层价值

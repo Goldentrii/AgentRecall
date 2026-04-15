@@ -20,6 +20,7 @@ import * as path from "node:path";
 import { getRoot } from "../types.js";
 import { ensureDir } from "../storage/fs-utils.js";
 import { extractKeywords } from "../helpers/auto-name.js";
+import { withLock } from "../storage/filelock.js";
 
 const MAX_LINES = 200;
 
@@ -34,17 +35,19 @@ export function readAwareness(): string {
 }
 
 export function writeAwareness(content: string): void {
-  const p = awarenessPath();
-  ensureDir(path.dirname(p));
+  withLock("awareness", () => {
+    const p = awarenessPath();
+    ensureDir(path.dirname(p));
 
-  // Enforce 200-line max
-  const lines = content.split("\n");
-  if (lines.length > MAX_LINES) {
-    const truncated = lines.slice(0, MAX_LINES).join("\n");
-    fs.writeFileSync(p, truncated + "\n", "utf-8");
-  } else {
-    fs.writeFileSync(p, content, "utf-8");
-  }
+    // Enforce 200-line max
+    const lines = content.split("\n");
+    if (lines.length > MAX_LINES) {
+      const truncated = lines.slice(0, MAX_LINES).join("\n");
+      fs.writeFileSync(p, truncated + "\n", "utf-8");
+    } else {
+      fs.writeFileSync(p, content, "utf-8");
+    }
+  });
 }
 
 export interface Insight {
@@ -89,9 +92,12 @@ export function readAwarenessState(): AwarenessState | null {
 }
 
 export function writeAwarenessState(state: AwarenessState): void {
-  const p = AWARENESS_JSON_PATH();
-  ensureDir(path.dirname(p));
-  fs.writeFileSync(p, JSON.stringify(state, null, 2), "utf-8");
+  withLock("awareness-state", () => {
+    const p = AWARENESS_JSON_PATH();
+    ensureDir(path.dirname(p));
+    state.lastUpdated = new Date().toISOString();
+    fs.writeFileSync(p, JSON.stringify(state, null, 2), "utf-8");
+  });
 }
 
 // ── Archive: demoted insights are preserved, not deleted ──────────────────

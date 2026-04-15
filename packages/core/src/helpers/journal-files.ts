@@ -17,27 +17,28 @@ export function listJournalFiles(project: string): JournalEntry[] {
   const entries: JournalEntry[] = [];
   const seen = new Set<string>();
 
-  // First pass: look for YYYY-MM-DD.md journal entries
+  // First pass: look for YYYY-MM-DD.md and YYYY-MM-DD-{sessionId}.md journal entries
   for (const dir of dirs) {
     if (!fs.existsSync(dir)) continue;
     const files = fs.readdirSync(dir);
     for (const file of files) {
-      const match = file.match(/^(\d{4}-\d{2}-\d{2})\.md$/);
-      if (match && !seen.has(match[1])) {
-        seen.add(match[1]);
+      // Match: YYYY-MM-DD.md or YYYY-MM-DD-{sessionId}.md (but not -log.md variants)
+      const match = file.match(/^(\d{4}-\d{2}-\d{2})(?:-[a-f0-9]{6})?\.md$/);
+      if (match && !seen.has(file)) {
+        seen.add(file);
         entries.push({ date: match[1], file, dir });
       }
     }
   }
 
-  // Second pass: include YYYY-MM-DD-log.md capture files for dates not already covered
+  // Second pass: include YYYY-MM-DD-log.md and YYYY-MM-DD-{sessionId}-log.md capture files
   for (const dir of dirs) {
     if (!fs.existsSync(dir)) continue;
     const files = fs.readdirSync(dir);
     for (const file of files) {
-      const match = file.match(/^(\d{4}-\d{2}-\d{2})-log\.md$/);
-      if (match && !seen.has(match[1])) {
-        seen.add(match[1]);
+      const match = file.match(/^(\d{4}-\d{2}-\d{2})(?:-[a-f0-9]{6})?-log\.md$/);
+      if (match && !seen.has(file)) {
+        seen.add(file);
         entries.push({ date: match[1], file, dir });
       }
     }
@@ -55,13 +56,32 @@ export function readJournalFile(project: string, date: string): string | null {
   const primaryDir = journalDir(project);
   const allDirs = [primaryDir, ...dirs.filter((d) => d !== primaryDir)];
 
-  // Try YYYY-MM-DD.md first, then fall back to YYYY-MM-DD-log.md
-  for (const filename of [`${date}.md`, `${date}-log.md`]) {
-    for (const dir of allDirs) {
-      const filePath = path.join(dir, filename);
-      if (fs.existsSync(filePath)) {
-        return fs.readFileSync(filePath, "utf-8");
-      }
+  // Try exact date file first, then session-scoped variants, then -log variants
+  for (const dir of allDirs) {
+    if (!fs.existsSync(dir)) continue;
+
+    // Exact match
+    const exact = path.join(dir, `${date}.md`);
+    if (fs.existsSync(exact)) return fs.readFileSync(exact, "utf-8");
+
+    // Session-scoped variants: YYYY-MM-DD-{sessionId}.md — merge all for this date
+    const files = fs.readdirSync(dir);
+    const sessionFiles = files.filter(f => f.match(new RegExp(`^${date}-[a-f0-9]{6}\\.md$`)));
+    if (sessionFiles.length > 0) {
+      // Return all session journals for this date, merged
+      const parts = sessionFiles.map(f => fs.readFileSync(path.join(dir, f), "utf-8"));
+      return parts.join("\n\n---\n\n");
+    }
+
+    // Fall back to log file
+    const logFile = path.join(dir, `${date}-log.md`);
+    if (fs.existsSync(logFile)) return fs.readFileSync(logFile, "utf-8");
+
+    // Session-scoped log variants
+    const sessionLogs = files.filter(f => f.match(new RegExp(`^${date}-[a-f0-9]{6}-log\\.md$`)));
+    if (sessionLogs.length > 0) {
+      const parts = sessionLogs.map(f => fs.readFileSync(path.join(dir, f), "utf-8"));
+      return parts.join("\n\n---\n\n");
     }
   }
   return null;

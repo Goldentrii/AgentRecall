@@ -9,6 +9,8 @@ import { ensurePalaceInitialized, roomExists, createRoom } from "../palace/rooms
 import { palaceDir } from "../storage/paths.js";
 import { fanOut } from "../palace/fan-out.js";
 import { updatePalaceIndex } from "../palace/index-manager.js";
+import { captureLogFileName } from "../storage/session.js";
+import { generateFrontmatter } from "../palace/obsidian.js";
 
 export interface JournalCaptureInput {
   question: string;
@@ -41,7 +43,10 @@ export async function journalCapture(input: JournalCaptureInput): Promise<Journa
     autoTags = input.tags;
   }
 
-  const logPath = path.join(dir, `${date}-log.md`);
+  // Session-safe log filename: avoids conflicts when multiple sessions capture simultaneously
+  const baseLogPath = path.join(dir, `${date}-log.md`);
+  const logFileName = captureLogFileName(date, fs.existsSync(baseLogPath));
+  const logPath = path.join(dir, logFileName);
   const entryNum = countLogEntries(logPath) + 1;
   const tagStr = input.tags && input.tags.length > 0 ? ` [${input.tags.join(", ")}]` : "";
   const timestamp = new Date().toISOString().slice(11, 19);
@@ -51,7 +56,15 @@ export async function journalCapture(input: JournalCaptureInput): Promise<Journa
   entry += `**A:** ${input.answer}\n\n`;
 
   if (!fs.existsSync(logPath)) {
-    const header = `# ${date} — ${slug} — Session Log\n\n`;
+    // Obsidian-compatible frontmatter for new capture logs
+    const fm = generateFrontmatter({
+      type: "capture-log",
+      project: slug,
+      date,
+      tags: ["capture", slug],
+      created: new Date().toISOString(),
+    });
+    const header = `${fm}# ${date} — ${slug} — Session Log\n\n`;
     fs.writeFileSync(logPath, header + entry, "utf-8");
   } else {
     fs.appendFileSync(logPath, entry, "utf-8");

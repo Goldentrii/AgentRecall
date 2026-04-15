@@ -122,6 +122,8 @@ export type { ConsolidationResult } from "./palace/consolidate.js";
 export { journalDir, journalDirs, palaceDir, roomDir } from "./storage/paths.js";
 export { ensureDir, todayISO, readJsonSafe, writeJsonAtomic } from "./storage/fs-utils.js";
 export { detectProject, resolveProject, listAllProjects } from "./storage/project.js";
+export { getSessionId, journalFileName, captureLogFileName, resetOwnedFiles } from "./storage/session.js";
+export { acquireLock, withLock } from "./storage/filelock.js";
 
 // Helpers
 export {

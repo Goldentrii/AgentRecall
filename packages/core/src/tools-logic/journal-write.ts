@@ -9,6 +9,7 @@ import { ensurePalaceInitialized, roomExists, createRoom } from "../palace/rooms
 import { fanOut } from "../palace/fan-out.js";
 import { generateFrontmatter } from "../palace/obsidian.js";
 import { updatePalaceIndex } from "../palace/index-manager.js";
+import { journalFileName } from "../storage/session.js";
 
 export interface JournalWriteInput {
   content: string;
@@ -30,13 +31,25 @@ export async function journalWrite(input: JournalWriteInput): Promise<JournalWri
   const dir = journalDir(slug);
   ensureDir(dir);
 
-  const filePath = path.join(dir, `${date}.md`);
+  // Session-safe filename: if another session already wrote today's journal,
+  // this session gets its own file (YYYY-MM-DD-{sessionId}.md) to avoid conflicts.
+  const basePath = path.join(dir, `${date}.md`);
+  const fileName = journalFileName(date, fs.existsSync(basePath));
+  const filePath = path.join(dir, fileName);
 
   let existing = "";
   if (fs.existsSync(filePath)) {
     existing = fs.readFileSync(filePath, "utf-8");
   } else if (!input.section || input.section !== "replace_all") {
-    existing = `# ${date} — ${slug}\n`;
+    // Obsidian-compatible frontmatter for new journal entries
+    const fm = generateFrontmatter({
+      type: "journal",
+      project: slug,
+      date,
+      tags: ["journal", slug],
+      created: new Date().toISOString(),
+    });
+    existing = `${fm}# ${date} — ${slug}\n`;
   }
 
   const sectionArg = input.section ?? null;

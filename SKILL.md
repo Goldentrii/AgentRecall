@@ -264,7 +264,7 @@ This feeds the predictive system. Future agents on this project will get warning
 ```
 7. check() with corrections if any       → record what human corrected
 8. session_end()                          → save journal + insights + consolidation
-9. Offer git push if applicable
+9. Done — all data saved locally (only push to git if user explicitly asks)
 ```
 
 ---

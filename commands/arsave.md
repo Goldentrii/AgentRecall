@@ -15,7 +15,6 @@ Runs the complete AgentRecall end-of-session flow:
 3. **Awareness** — extract 1-3 insights from this session into the compounding system
 4. **Verify** — check that promotion actually happened (don't trust the consolidation blindly)
 5. **Compact** — auto-trigger weekly roll-up if old journals are piling up
-6. **Git** — push to GitHub if user has configured it
 
 ## Process
 
@@ -94,7 +93,7 @@ If the dry run shows weeks that can be rolled up:
 - Ask: "Roll up? [yes/no]"
 - If yes, call `journal_rollup(dry_run=false)`
 
-### Step 7: Confirm and offer git push
+### Step 7: Confirm
 
 Show the user a summary:
 ```
@@ -105,10 +104,7 @@ Show the user a summary:
 ✅ Compact: N weeks rolled up (or "no old journals to compact")
 ```
 
-Then ask: "Push to GitHub?" If yes, run:
-```bash
-cd <project-root> && git add -A && git commit -m "session: YYYY-MM-DD <one-line summary>" && git push
-```
+> **Note:** Do NOT offer to push to GitHub. All data is local-first. Only push if the user explicitly asks.
 
 ## Important Rules
 

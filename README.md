@@ -9,14 +9,14 @@
   <a href="https://www.npmjs.com/package/agent-recall-sdk"><img src="https://img.shields.io/npm/v/agent-recall-sdk?style=flat-square&label=SDK&color=0EA5E9" alt="SDK npm"></a>
   <a href="https://www.npmjs.com/package/agent-recall-cli"><img src="https://img.shields.io/npm/v/agent-recall-cli?style=flat-square&label=CLI&color=10B981" alt="CLI npm"></a>
   <a href="https://github.com/Goldentrii/AgentRecall/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
-  <img src="https://img.shields.io/badge/MCP-5_tools-orange?style=flat-square" alt="Tools">
+  <img src="https://img.shields.io/badge/MCP-6_tools-orange?style=flat-square" alt="Tools">
   <img src="https://img.shields.io/badge/cloud-zero-blue?style=flat-square" alt="Zero Cloud">
   <img src="https://img.shields.io/badge/Obsidian-compatible-7C3AED?style=flat-square" alt="Obsidian">
-  <img src="https://img.shields.io/badge/overhead-~876_tokens%2Fsession-22C55E?style=flat-square" alt="Token overhead">
+  <img src="https://img.shields.io/badge/digest_cache-83%25_token_savings-FF6B6B?style=flat-square" alt="Digest cache savings">
   <img src="https://img.shields.io/badge/saves_up_to-57%25_tokens-FF6B6B?style=flat-square" alt="Token savings">
   <img src="https://img.shields.io/badge/break--even-3--4_sessions-22C55E?style=flat-square" alt="Break-even">
   <img src="https://img.shields.io/badge/scoring-RRF_(Cormack_2009)-7C3AED?style=flat-square" alt="RRF scoring">
-  <img src="https://img.shields.io/badge/decay-Ebbinghaus_(1885)-3B82F6?style=flat-square" alt="Ebbinghaus decay">
+  <img src="https://img.shields.io/badge/decay-Ebbinghaus%2BZipf-3B82F6?style=flat-square" alt="Ebbinghaus+Zipf decay">
   <img src="https://img.shields.io/badge/feedback-Bayesian_Beta-F59E0B?style=flat-square" alt="Beta distribution">
 </p>
 
@@ -394,9 +394,9 @@ session_end(summary="...", insights=[...], trajectory="...")  → journal + awar
 
 ---
 
-## 5 MCP Tools
+## 6 MCP Tools
 
-AgentRecall exposes exactly 5 tools to agents. Each tool composes multiple subsystems internally — the agent doesn't need to know about the plumbing.
+AgentRecall exposes 6 tools to agents. Each tool composes multiple subsystems internally — the agent doesn't need to know about the plumbing.
 
 | Tool | What it does |
 |------|-------------|
@@ -405,6 +405,7 @@ AgentRecall exposes exactly 5 tools to agents. Each tool composes multiple subsy
 | `recall` | Search all memory stores at once using **Reciprocal Rank Fusion (RRF)** — each source ranks internally, then positions are merged so no source dominates by default. Returns ranked results with stable IDs. Accepts `feedback` to rate previous results: positive boosts future ranking, negative penalizes. Query-aware — feedback from one search doesn't bleed into unrelated queries. |
 | `session_end` | Save everything in one call. Writes journal, updates awareness with new insights, consolidates to palace rooms, archives demoted insights (not deleted — preserved with resurrection support). |
 | `check` | Record what you think the human wants. Returns `watch_for` patterns from past correction history ("You've been corrected on X 3 times — ask about it"). Accepts `human_correction` and `delta` after the human responds. Auto-promotes strong patterns (3+) to awareness. |
+| `digest` | **Context cache** — store pre-computed analysis results (codebase audits, subagent explorations) and recall them instead of recomputing. Actions: `store`, `recall`, `read`, `invalidate`. Scoring uses Ebbinghaus decay with Zipf-adjusted half-life: frequently-accessed digests decay slower. Supports TTL, global (cross-project) store, and dedup via keyword overlap. **Benchmarked: 83% token savings on repeated analysis vs. recompute.** |
 
 ### Legacy tools
 
@@ -717,9 +718,9 @@ L5: Insight Index      recall_insight            "cross-project experience"
 
 ### A/B Comparison: With vs Without AgentRecall
 
-We ran a controlled A/B benchmark simulating a real multi-session SaaS project (Next.js + Drizzle + Stripe) across 5 rounds, then projected the measured per-tool costs into 4 real-world scenarios.
+We ran two controlled benchmarks: a 5-round A/B test simulating a multi-session SaaS project (Next.js + Drizzle + Stripe), and a 10-round v3.3.16 benchmark validating the new `digest` cache tool, `arsaveall`, and cross-project recall. Token costs are derived from actual measured counts — not estimates.
 
-**"Without AR" models what a human must do manually:** re-paste architecture decisions, re-explain corrections, answer clarifying questions that AR would have loaded automatically. All numbers are derived from actual measured token counts — not estimates.
+**"Without AR" models what a human must do manually:** re-paste architecture decisions, re-explain corrections, answer clarifying questions that AR would have loaded automatically.
 
 | Scenario | Without AR | With AR | **Saved** |
 |----------|:---------:|:------:|:--------:|
@@ -727,8 +728,9 @@ We ran a controlled A/B benchmark simulating a real multi-session SaaS project (
 | **B: Medium** (5 sessions, 1 correction) | 6,220 | 4,382 | **-30%** |
 | **C: Complex** (20 sessions, 5 corrections) | 40,910 | 17,520 | **-57%** |
 | **D: Multi-agent** (3 agents × 5 sessions) | 20,781 | 13,140 | **-37%** |
+| **E: Digest cache** (repeated analysis, 1 recall hit) | ~2,400 | ~400 | **-83%** |
 
-> **Read this table honestly:** For simple throwaway tasks, AR is pure overhead. For anything with 3+ sessions, corrections, or multiple agents, it pays for itself — and the savings compound.
+> **Read this table honestly:** For simple throwaway tasks, AR is pure overhead. For anything with 3+ sessions, corrections, or multiple agents, it pays for itself — and the savings compound. With digest cache, repeated analysis tasks (codebase exploration, API audits) see 83% savings on the second+ call.
 
 **Break-even: ~3-4 sessions.** After that, every session with AR is cheaper than without.
 
@@ -740,10 +742,11 @@ We ran a controlled A/B benchmark simulating a real multi-session SaaS project (
 | **Correction retention** | ~800 tokens per repeat (wrong output + correction + redo) | 0 (stored once, never repeated) | Biggest single savings driver in long projects |
 | **Clarification avoidance** | ~400 tokens/session (agent asks "what framework?", "what auth?") | 0 (already loaded) | Steady per-session savings |
 | **Cross-project recall** | ~500 tokens per insight (re-research from scratch) | ~350 tokens (automatic recall) | Moderate savings, compounds across projects |
+| **Digest cache** | ~2,400 tokens (full re-analysis) | ~400 tokens (recall stored digest) | 83% savings on repeated heavy analysis tasks |
 
 ### Measured Per-Tool Token Costs
 
-From the 5-round benchmark (34 tool calls total):
+From the 5-round A/B benchmark (34 tool calls) and 10-round v3.3.16 benchmark (7/7 checks pass):
 
 | Tool | Avg tokens | What it does |
 |------|:---------:|-------------|
@@ -751,6 +754,8 @@ From the 5-round benchmark (34 tool calls total):
 | `recallInsight` | 351 | Cross-project insight matching |
 | `walk` | 336 | Palace rooms at active depth |
 | `journalSearch` | 126 | Full-text search across journals |
+| `digest` (store) | ~180 | Store pre-computed analysis result |
+| `digest` (recall hit) | ~400 | Retrieve cached analysis (vs ~2,400 to redo) |
 | `awarenessUpdate` | 59 | Compound new insights |
 | `alignmentCheck` | 45 | Verify understanding + watch_for |
 | `nudge` | 39 | Capture human correction |
@@ -767,19 +772,27 @@ From the 5-round benchmark (34 tool calls total):
 | Correction miss cost | 800 tokens | Wrong output (~350) + correction message (~50) + redo (~400) |
 | Clarifications per cold session | 2 rounds × 200 tokens | Fresh agent asks "what framework?", "what auth?" |
 | Correction repeat rate | 3× before human re-catches | Without AR, same mistake repeats until human notices again |
+| Digest cache hit threshold | keyword overlap ≥ 0.2 | Zipf-adjusted Ebbinghaus decay; proven-useful digests have longer half-life |
 
-All benchmark code: [`benchmark/run.mjs`](benchmark/run.mjs) and [`benchmark/ab-comparison.mjs`](benchmark/ab-comparison.mjs). Run them yourself: `node benchmark/run.mjs && node benchmark/ab-comparison.mjs`.
+All benchmark code: [`benchmark/run.mjs`](benchmark/run.mjs), [`benchmark/ab-comparison.mjs`](benchmark/ab-comparison.mjs), and [`benchmark/v3316-benchmark.mjs`](benchmark/v3316-benchmark.mjs). Run them yourself: `node benchmark/run.mjs && node benchmark/ab-comparison.mjs && node benchmark/v3316-benchmark.mjs`.
 
 ### Functional Verification
 
-Beyond token measurement, the benchmark verified:
+Beyond token measurement, the benchmarks verified:
 
-| Test | Result |
-|------|:------:|
-| Correction retention (stored in Round 2, checked in Round 3) | **PASS** |
-| Cross-project recall: rate limiting insight (Project A → B) | **PASS** |
-| Cross-project recall: ORM insight (Project A → B) | **PASS** |
-| Cold start progression (empty → rich context) | 178 → 385 tokens (stable) |
+| Test | Benchmark | Result |
+|------|:---------:|:------:|
+| Correction retention (stored in R2, loaded in R3) | A/B | **PASS** |
+| Cross-project recall: rate limiting insight (Project A → B) | A/B | **PASS** |
+| Cross-project recall: ORM insight (Project A → B) | A/B | **PASS** |
+| Cold start progression (empty → rich context) | A/B | 178 → 385 tokens (stable) |
+| Digest store + recall hit with 83% savings | v3.3.16 | **PASS** |
+| Cross-project digest (global scope, Project C reads Project A's digest) | v3.3.16 | **PASS** |
+| Digest refresh updates TTL and content | v3.3.16 | **PASS** |
+| arsaveall: orphaned session rescue + cross-project consolidation | v3.3.16 | **PASS** |
+| Zipf-adjusted decay: score bounded [0, 1] at 50 accesses | v3.3.16 | **PASS** |
+| Cold start growth: each round enriches context | v3.3.16 | **PASS** |
+| All 7 functional checks | v3.3.16 | **7/7 PASS** |
 
 ---
 
@@ -1111,9 +1124,9 @@ session_end(summary="...", insights=[...], trajectory="...")  → 日志 + 感�
 
 ---
 
-## 5 个 MCP 工具
+## 6 个 MCP 工具
 
-AgentRecall 目前只向 agent 提供 5 个工具。每个工具内部组合多个子系统 — agent 不需要了解内部管道。
+AgentRecall 目前只向 agent 提供 6 个工具。每个工具内部组合多个子系统 — agent 不需要了解内部管道。
 
 | 工具 | 功能 |
 |------|------|
@@ -1122,6 +1135,7 @@ AgentRecall 目前只向 agent 提供 5 个工具。每个工具内部组合多�
 | `recall` | 通过**互惠排名融合（RRF）**一次搜索所有记忆 — 每个来源内部独立排名，再按位置合并，避免任何单一来源靠原始分数主导结果。返回带稳定 ID 的排名结果。支持 `feedback` 评价：正面提升排名，负面降低。查询感知 — 某次搜索的反馈不影响无关查询。 |
 | `session_end` | 一次调用保存全部。写入日志、更新感知、整合到宫殿、归档被替换的洞察（不删除 — 支持复活）。 |
 | `check` | 记录你对人类意图的理解。返回历史纠正模式的 `watch_for` 预警。支持记录 `human_correction` 和 `delta`。3+ 次的强模式自动提升为感知洞察。 |
+| `digest` | **上下文缓存**。将耗时分析（代码库探索、API 审计、架构总结）存储为 digest，后续 agent 直接召回而无需重新分析。使用 Ebbinghaus 衰减 + Zipf 半衰期评分；高频访问的 digest 衰减更慢。实测节省 83% token。 |
 
 ### 旧版工具
 

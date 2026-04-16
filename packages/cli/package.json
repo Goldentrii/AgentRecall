@@ -1,16 +1,25 @@
 {
   "name": "agent-recall-cli",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "CLI for AgentRecall memory system",
   "type": "module",
-  "bin": { "ar": "dist/index.js" },
-  "files": ["dist", "README.md"],
+  "bin": {
+    "ar": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "node --test test/*.test.mjs"
   },
   "keywords": [
-    "agent-recall", "ai-memory", "cli", "memory-palace", "agent-memory"
+    "agent-recall",
+    "ai-memory",
+    "cli",
+    "memory-palace",
+    "agent-memory"
   ],
   "dependencies": {
     "agent-recall-core": "^3.3.10"

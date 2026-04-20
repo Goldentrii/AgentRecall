@@ -488,16 +488,31 @@ async function main(): Promise<void> {
 
     case "hook-correction": {
       // Reads UserPromptSubmit JSON from stdin.
-      // Detects correction language and silently captures to alignment-log.
-      // Per-session lock prevents duplicate entries from multiple fires in the same session.
+      // Detects correction language (English + Chinese) and silently captures to alignment-log.
+      // Per-message hash dedup prevents duplicate entries from hook re-fires.
       // Always exits 0 — never blocks the conversation.
-      const corrSessionId = process.env.CLAUDE_SESSION_ID ?? process.env.SESSION_ID ?? "";
-      const corrLockKey = corrSessionId || new Date().toISOString().slice(0, 13); // hour-granularity fallback
-      const corrLockFile = path.join(os.homedir(), ".agent-recall", ".hook-correction-lock");
-      let corrLockContent = "";
-      try { corrLockContent = fs.existsSync(corrLockFile) ? fs.readFileSync(corrLockFile, "utf-8").trim() : ""; } catch { /* non-blocking */ }
+      const corrLockFile = path.join(os.homedir(), ".agent-recall", ".hook-correction-seen");
+
+      // Read existing seen hashes (JSON array of recent prompt hashes)
+      let seenHashes: string[] = [];
+      try {
+        if (fs.existsSync(corrLockFile)) {
+          seenHashes = JSON.parse(fs.readFileSync(corrLockFile, "utf-8"));
+          if (!Array.isArray(seenHashes)) seenHashes = [];
+        }
+      } catch { seenHashes = []; }
+
+      function quickHash(text: string): string {
+        let h = 0;
+        for (let i = 0; i < text.length; i++) {
+          h = ((h << 5) - h) + text.charCodeAt(i);
+          h |= 0;
+        }
+        return Math.abs(h).toString(36).slice(0, 8);
+      }
 
       const CORRECTION_PATTERNS = [
+        // English patterns
         /\bthat'?s\s+wrong\b/i,
         /\byou\s+(missed|didn'?t|forgot|skipped)\b/i,
         /\bnot\s+what\s+i\s+(asked|wanted|meant|said)\b/i,
@@ -507,6 +522,19 @@ async function main(): Promise<void> {
         /\bi\s+said\b.*\bnot\b/i,
         /\bdon'?t\s+(do\s+that|change|delete|add)\b/i,
         /\bno[,!.]\s+(don'?t|that|you|i\s+meant)\b/i,
+        // Chinese patterns
+        /不对/,
+        /错了/,
+        /不要这样/,
+        /不是这个/,
+        /你搞错了/,
+        /我说的不是/,
+        /别这样做/,
+        /重新来/,
+        /你忘了/,
+        /不是我要的/,
+        /搞反了/,
+        /方向不对/,
       ];
 
       try {
@@ -533,13 +561,16 @@ async function main(): Promise<void> {
 
         const isCorrection = CORRECTION_PATTERNS.some((p) => p.test(prompt));
         if (isCorrection && prompt.length > 3) {
-          // Per-session dedup: only write the first correction per session.
-          // Subsequent corrections in the same session would have slightly different text,
-          // but the session lock prevents runaway writes from hook re-fires.
-          if (corrLockContent === corrLockKey) {
+          // Per-message dedup: skip only if the exact same prompt was already processed
+          const promptHash = quickHash(prompt);
+          if (seenHashes.includes(promptHash)) {
             process.exit(0);
           }
-          try { fs.writeFileSync(corrLockFile, corrLockKey, "utf-8"); } catch { /* non-blocking */ }
+
+          // Record this hash; keep only last 20 to prevent unbounded growth
+          seenHashes.push(promptHash);
+          if (seenHashes.length > 20) seenHashes = seenHashes.slice(-20);
+          try { fs.writeFileSync(corrLockFile, JSON.stringify(seenHashes), "utf-8"); } catch { /* non-blocking */ }
 
           await core.check({
             goal: lastGoal || "Unknown — see correction",

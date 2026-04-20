@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/cloud-zero-blue?style=flat-square" alt="Zero Cloud">
   <img src="https://img.shields.io/badge/scoring-RRF_(Cormack_2009)-7C3AED?style=flat-square" alt="RRF scoring">
   <img src="https://img.shields.io/badge/decay-Ebbinghaus%2BZipf-3B82F6?style=flat-square" alt="Ebbinghaus+Zipf decay">
-  <img src="https://img.shields.io/badge/feedback-Bayesian_Beta-F59E0B?style=flat-square" alt="Beta distribution">
+  <img src="https://img.shields.io/badge/feedback-Bayesian_Beta_(designed)-F59E0B?style=flat-square" alt="Beta distribution">
 </p>
 
 <p align="center">
@@ -195,8 +195,8 @@ Each memory store (journal, palace, knowledge, awareness) ranks results internal
 
 Digest cache half-life is Zipf-adjusted: frequently-accessed digests decay slower.
 
-**3. Bayesian Beta Distribution**
-`E[Beta(α,β)] = (pos+1)/(pos+neg+2)` — optimal estimate of true usefulness from binary feedback. Feedback is query-aware; rating a result "useless" for one query doesn't penalize it for different queries.
+**3. Bayesian Beta Distribution (designed)**
+`E[Beta(α,β)] = (pos+1)/(pos+neg+2)` — optimal estimate of true usefulness from binary feedback. Feedback is query-aware; rating a result "useless" for one query doesn't penalize it for different queries. *Note: the scoring math is implemented but no activation path submits feedback signals yet.*
 
 Full rationale: [docs/SCORING.md](../../docs/SCORING.md)
 

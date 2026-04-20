@@ -18,7 +18,7 @@ export function register(server: McpServer): void {
       project: z.string().default("auto"),
     },
   }, async ({ summary, insights, trajectory, project }) => {
-    const result = await sessionEnd({ summary, insights, trajectory, project });
+    const result = await sessionEnd({ summary, insights, trajectory, project, saveType: "arsave" });
     return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
   });
 }

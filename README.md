@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/break--even-3--4_sessions-22C55E?style=flat-square" alt="Break-even">
   <img src="https://img.shields.io/badge/scoring-RRF_(Cormack_2009)-7C3AED?style=flat-square" alt="RRF scoring">
   <img src="https://img.shields.io/badge/decay-Ebbinghaus%2BZipf-3B82F6?style=flat-square" alt="Ebbinghaus+Zipf decay">
-  <img src="https://img.shields.io/badge/feedback-Bayesian_Beta-F59E0B?style=flat-square" alt="Beta distribution">
+  <img src="https://img.shields.io/badge/feedback-Bayesian_Beta_(designed)-F59E0B?style=flat-square" alt="Beta distribution">
 </p>
 
 <p align="center">
@@ -503,6 +503,8 @@ Session 2: recall("auth patterns") → similar query
 ```
 
 No-feedback items stay neutral (multiplier ×1.0). Feedback is query-aware — rating a result "useless" for "auth design" doesn't penalize it for "database schema". The system learns per-context, not globally.
+
+> **Note:** The feedback loop (Beta distribution scoring) is implemented in the scoring engine but has no activation path yet — no agent or hook currently submits feedback signals. The math is ready; the wiring is not.
 
 ### The Compounding Effect
 
@@ -1235,6 +1237,8 @@ Agent 写入: "JWT 刷新令牌轮换防止会话固定攻击"
 ```
 
 无反馈的条目保持中性（×1.0）。反馈是查询感知的 — 把一条结果标记为"对认证设计没用"不会惩罚它在"数据库设计"中的表现。系统按上下文学习，而非全局惩罚。
+
+> **注意：** 反馈回路（Beta 分布评分）已在评分引擎中实现，但尚无激活路径——目前没有 agent 或 hook 提交反馈信号。数学已就绪，接线尚未完成。
 
 ### 复合效应
 

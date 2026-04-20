@@ -136,7 +136,7 @@ Memory is not a list. It's a compounding system — each layer feeds the next:
 2. **Indexes** — Every memory has an address in palace index, insights index, and the 200-line awareness document.
 3. **Relativity** — Memories that relate to each other are connected automatically via graph edges.
 4. **Weight + Decay** — Salience scoring: `recency(0.30) + access(0.25) + connections(0.20) + urgency(0.15) + importance(0.10)`. Architecture decisions persist; blocker noise fades.
-5. **Feedback Loop** — Bayesian Beta distribution learns which recalled memories are actually useful. Useful memories rise; noise sinks.
+5. **Feedback Loop** — Bayesian Beta distribution (designed) learns which recalled memories are actually useful. Useful memories rise; noise sinks. *Note: the scoring math is implemented but no activation path submits feedback signals yet.*
 
 ```
 Session 1:   Save 3 memories → auto-named, indexed, edges created

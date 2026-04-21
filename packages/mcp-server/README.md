@@ -67,16 +67,17 @@ curl -o ~/.claude/commands/arsaveall.md https://raw.githubusercontent.com/Golden
 
 ## Four Commands
 
-> That's all you need.
+> [!IMPORTANT]
+> **Start every session with `/arstatus`** — it shows all your projects, what's pending, what's blocked, and lets you pick what to work on. Without it, a fresh agent has no idea where to begin.
 
 | Command | When | What it does |
 |---------|------|-------------|
-| ⭐ **`/arstatus`** | **Every session start** | **Full status board across ALL projects — pending work, blockers, what to pick up. Start here.** |
+| ⭐ **`/arstatus`** | **Every session — run this first** | **Status board across ALL projects: pending work, blockers, numbered list to pick from. True cold start.** |
 | **`/arstart`** | After picking a project | Load deep context for one project: palace rooms, corrections, task-specific recall |
 | **`/arsave`** | End of session | Write journal + consolidate to palace + update awareness |
 | **`/arsaveall`** | End of day (multi-session) | Batch save all parallel sessions at once — scan, merge, deduplicate |
 
-**The session flow:** `/arstatus` → see everything in flight → pick a project → `/arstart <project>` → work → `/arsave`.
+**The session flow:** `/arstatus` → pick a number → `/arstart <project>` → work → `/arsave`.
 
 **Running 5 agents in parallel?** Don't `/arsave` five times. Type **`/arsaveall`** once — it scans all sessions across all projects, merges them into consolidated journals, deduplicates insights. Each session writes to its own file (session-ID scoped), so no conflicts, no data loss.
 

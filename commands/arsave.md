@@ -135,12 +135,6 @@ Rules for the card:
 - Omit Palace section if no rooms were touched
 - If palace rooms are unknown, show `palace/rooms/` without room names
 - Use `[skipped]` for rooms checked but unchanged
-- After the card and any correction blocks, ask: **Push to GitHub?**
-
-If yes, run:
-```bash
-cd <project-root> && git add -A && git commit -m "session: YYYY-MM-DD <one-line summary>" && git push
-```
 
 ## Important Rules
 

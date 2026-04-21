@@ -88,7 +88,6 @@ Rules for the all-sessions card:
 - Use `✓` rescued, `~` skipped, `✗` failed
 - Show actual project path indented below each entry
 - Bottom section always shows totals + global files updated
-- After the card, ask: **Push to GitHub?**
 
 ## Diagnostic: List sessions without saving
 

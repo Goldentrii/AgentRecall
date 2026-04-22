@@ -41,11 +41,19 @@ ls ~/.agent-recall/projects/<slug>/journal/*.md 2>/dev/null \
 
 Skip any slug that returns no journal files — it's an empty or test directory.
 
-### Step 2: Extract date and Next section
+### Step 2: Extract date, Next section, and Intention
 
 From each journal filename, extract the date (`YYYY-MM-DD` prefix).
 
 Read the file and extract the content under `## Next` — stop at the next `##` heading or EOF. If no `## Next` section exists, use the first non-frontmatter line of the file as fallback.
+
+Also read the project's intention from its identity file:
+
+```bash
+cat ~/.agent-recall/projects/<slug>/palace/identity.md 2>/dev/null
+```
+
+Look for a line starting with `**Intention:**` or `Intention:`. Extract the value after the colon. This is the user's original WHY for starting the project — distinct from what's next to do.
 
 ### Step 3: Classify project status
 
@@ -70,10 +78,10 @@ Special rule: the global catchall project (`tongwu`) goes last — it's less act
 ──────────────────────────────────────────────────────────────
 
   1  ⚠ <project-slug>        <YYYY-MM-DD>   BLOCKED
-       <Blocked reason — one line, max 80 chars>
+       Why: <intention>  |  Blocked: <blocked reason>
 
   2  ● <project-slug>        <YYYY-MM-DD>
-       Next: <Next item — one line, max 80 chars>
+       Why: <intention>  |  Next: <Next item — max 60 chars>
 
   3  ● <project-slug>        <YYYY-MM-DD>
        Next: <Next item — one line, max 80 chars>
@@ -88,33 +96,47 @@ Special rule: the global catchall project (`tongwu`) goes last — it's less act
   Enter a number, or:
     N  New project (with memory — agent knows your full history)
     X  New project (clean slate — no prior context, pure objectivity)
+    d<N>  Delete project at that number (e.g. d5)
 ──────────────────────────────────────────────────────────────
 ```
 
 Rules for the card:
 - Each project is exactly 2 lines: status line (with number) + content line (indented to align under slug)
+- Content line format (priority order):
+  - If intention exists: prefix with `Why: <intention>  |  ` then append `Next:` or `Blocked:` or `Last:`
+  - If no intention: show `Next:` / `Blocked:` / `Last:` alone
+  - Truncate the whole content line to ~90 chars with `…`
 - Numbers start at 1 and increment continuously across all status groups
-- Truncate content to ~80 chars with `…` if longer
 - `<N> projects` = total count shown (excluding skipped empties)
 - Date column aligns across all rows for readability
 - The slug shown in the card is for reference only — the human responds with a number, not the slug name
 
 ### Step 5: Respond to selection (interactive sessions only)
 
-Three response types:
+Four response types:
 
 **Number (e.g. `3`)** — existing project
 Map the number back to the slug from your rendered list. Run `/arstart <slug>` to load full context.
 
 **N — New project with memory**
 Ask: "Project name?" → create a new project slug (kebab-case, auto-derived from name).
-Call `session_start(project="<new-slug>")` — this loads cross-project insights and awareness from ALL existing projects. The agent starts knowing your full history, preferences, and past decisions. Good for work that builds on or connects to existing projects.
+Call `session_start(project="<new-slug>")` — this loads cross-project insights and awareness from ALL existing projects. Good for work that builds on or connects to existing projects.
+
+> Intention is captured automatically on first `/arsave` — extracted from the earliest user messages in that conversation. No need to ask here.
 
 **X — New project, clean slate**
 Ask: "Project name?" → note the slug.
 Do NOT call session_start. Do NOT load any memory, awareness, or past insights.
 Say: "Starting fresh — no prior context loaded. This session is objective."
-Good for: code reviewers, audits, independent evaluations, second opinions where past bias would corrupt the output.
+Good for: code reviewers, audits, independent evaluations, second opinions.
+
+> Intention is captured automatically on first `/arsave` — no need to ask here.
+
+**d<N> — Delete project (e.g. `d5`)**
+Map the number back to the slug.
+Ask for confirmation: "Delete **<slug>**? This removes all journals and palace data. Reply `d<N>` again to confirm."
+On second `d<N>`: run `rm -rf ~/.agent-recall/projects/<slug>/` and say "Deleted <slug>."
+On anything else: abort silently.
 
 If they press Enter or say "skip" — proceed without loading any project context.
 

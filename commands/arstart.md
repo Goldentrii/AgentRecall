@@ -10,6 +10,52 @@ Load deep context for a specific project: identity, palace rooms, corrections, a
 > Run `/arstatus` first — it shows all projects and pending work across everything.
 > Come back here once you've picked a project.
 
+## Token-Efficient Cold Start (skip /arstatus when you already know the project)
+
+For a returning agent that already knows the project slug, you can bootstrap with just two reads — no MCP calls, no /arstatus scan needed:
+
+```bash
+# Layer 1: Claude AutoMemory (user profile + project pointers)
+cat ~/.claude/projects/-Users-tongwu/memory/MEMORY.md
+
+# Layer 2: AgentRecall palace identity (project intention + goals)
+cat ~/.agent-recall/projects/<slug>/palace/identity.md
+```
+
+These two files together answer: **who the user is + what this project is trying to achieve**. That's enough context to begin working.
+
+Then call `session_start` + `recall` as normal to load the full palace.
+
+## Journal Naming System
+
+AgentRecall journal files follow a naming pattern that acts as a searchable index:
+
+```
+YYYY-MM-DD.md                                    ← manual save
+YYYY-MM-DD--arsave--<lines>L--<keywords>.md      ← auto-saved (arsave/arsaveall)
+```
+
+Examples:
+```
+2026-04-21--arsave--6L--tool-config-brief-session-website.md
+2026-04-17--arsave--12L--auth-bug-session-end.md
+```
+
+**Use this to find past sessions by topic without /arstatus:**
+
+```bash
+# Find all sessions mentioning "tool" across all projects
+ls ~/.agent-recall/projects/*/journal/ | grep "tool"
+
+# Find sessions about "auth" in a specific project
+ls ~/.agent-recall/projects/novada-site/journal/ | grep "auth"
+
+# Get the latest journal for a project
+ls ~/.agent-recall/projects/<slug>/journal/*.md | grep -v log | sort -r | head -1
+```
+
+This naming system is the lightweight discovery layer — use it before reaching for /arstatus.
+
 ## When to Use
 
 Use /arstart once you know which project you're working on:

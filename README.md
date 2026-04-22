@@ -65,6 +65,9 @@
 
 ## `/arstatus`, `/arsave`, `/arstart`, and `/arsaveall`
 
+> [!TIP]
+> **New to AgentRecall?** Read the **[→ Command Reference](docs/commands.md)** — full instructions, all example outputs, installation, and troubleshooting in one place.
+
 > [!IMPORTANT]
 > **Run `/arstatus` at the start of every session.** It shows all your projects, what's pending, what's blocked, and lets you pick what to work on — by number, not by remembering project names. Without it, a fresh agent has no idea where to begin.
 
@@ -900,6 +903,7 @@ Beyond token measurement, the benchmarks verified:
 
 | Document | Description |
 |----------|-------------|
+| **[→ Command Reference](docs/commands.md)** | **Full guide to `/arstatus`, `/arstart`, `/arsave`, `/arsaveall` — example outputs, modes, palace rules, troubleshooting** |
 | [Intelligent Distance Protocol](docs/intelligent-distance-protocol.md) | The foundational theory — why the gap between human and AI is structural, and how to navigate it |
 | [Scoring Design Rationale](docs/SCORING.md) | Why the scoring system works this way — RRF, Ebbinghaus, Beta distribution, and the bugs they fix |
 | [MCP Adapter Spec](docs/mcp-adapter-spec.md) | Technical spec for building adapters on top of AgentRecall |

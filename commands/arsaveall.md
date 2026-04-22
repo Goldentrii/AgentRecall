@@ -24,9 +24,12 @@ One command to end a multi-session work day cleanly. Reads every VS Code Claude 
 ### Step 1: Save this session (same as /arsave)
 
 1. Read today's capture log if it exists: `~/.agent-recall/projects/<slug>/journal/<today>-log.md`
-2. Record any corrections from this session via `check()`
-3. Call `session_end` with summary + insights + trajectory
-4. Verify: spot-check with `recall(query="<today's key decision>")`
+2. **Capture intention if first save** — follow the same Step 1b from `/arsave`: check if `palace/identity.md` already has an `**Intention:**` line. If not, extract the WHY from this session's earliest user messages and write it before calling session_end.
+3. Record any corrections from this session via `check()`
+4. Call `session_end` with summary + insights + trajectory
+5. Verify: spot-check with `recall(query="<today's key decision>")`
+
+> The CLI rescue (Step 2) also captures intention for auto-rescued sessions: for each new project with no existing intention, it extracts it from the transcript head (first 10 user messages).
 
 ### Step 2: Run the transcript scanner
 

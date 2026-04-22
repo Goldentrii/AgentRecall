@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/break--even-3--4_sessions-22C55E?style=flat-square" alt="Break-even">
   <img src="https://img.shields.io/badge/scoring-RRF_(Cormack_2009)-7C3AED?style=flat-square" alt="RRF scoring">
   <img src="https://img.shields.io/badge/decay-Ebbinghaus%2BZipf-3B82F6?style=flat-square" alt="Ebbinghaus+Zipf decay">
-  <img src="https://img.shields.io/badge/feedback-Bayesian_Beta_(designed)-F59E0B?style=flat-square" alt="Beta distribution">
+  <img src="https://img.shields.io/badge/feedback-Bayesian_Beta_(active)-F59E0B?style=flat-square" alt="Beta distribution">
 </p>
 
 <p align="center">
@@ -539,6 +539,8 @@ Content: "Fixed a critical bug where the payment processor crashed on refunds"
 
 Good naming IS the first layer of retrieval. A well-named memory is 80% findable without any search algorithm.
 
+**File naming:** Journal files use the format `{date}--{saveType}--{lines}L--{slug}.md` — parseable by agents (`split("--")` → `[date, type, size, topic]`), readable by humans at a glance. Line count tells the agent the token cost before opening the file. Same-day saves auto-merge into one file per project.
+
 ### 2. Indexes
 
 Every memory has an address in three index systems:
@@ -587,6 +589,8 @@ salience = recency(0.30) + access(0.25) + connections(0.20) + urgency(0.15) + im
 
 Old journal noise fades in days. Architecture decisions persist indefinitely. Same query, right results.
 
+**Hot-window boost:** On top of Ebbinghaus, items from the last 6 hours get a 3× score multiplier, last 24 hours get 2×, last 72 hours get 1.3×. In active project work, the most recent context is almost always the most relevant. Palace items (timeless, no date) are unaffected.
+
 ### 5. Feedback Loop
 
 The system learns what's useful and what's not, using a **Bayesian Beta distribution** — the mathematically optimal estimate of true usefulness from binary observations (`E[Beta(α,β)] = (pos+1)/(pos+neg+2)`):
@@ -604,20 +608,25 @@ Session 2: recall("auth patterns") → similar query
 
 No-feedback items stay neutral (multiplier ×1.0). Feedback is query-aware — rating a result "useless" for "auth design" doesn't penalize it for "database schema". The system learns per-context, not globally.
 
-> **Note:** The feedback loop (Beta distribution scoring) is implemented in the scoring engine but has no activation path yet — no agent or hook currently submits feedback signals. The math is ready; the wiring is not.
+> **Feedback is now automatic.** The ambient recall hook tracks which memories were surfaced. If the human's next message is a correction → negative feedback. If not → positive feedback. No agent action required — the loop runs on every message via the `hook-ambient` UserPromptSubmit hook.
 
 ### The Compounding Effect
 
 ```
 Session 1:   Save 3 memories (auto-named, indexed, edges created)
 Session 5:   Recall surfaces memories from sessions 1-4, feedback refines ranking
+             Ambient recall shows different items each message (no repeats)
 Session 10:  watch_for warns agent about past mistakes before they repeat
+             Corrections include agent context (what the agent was doing when corrected)
 Session 20:  Awareness contains 10 cross-validated insights (merged from 40+ raw observations)
+             remember() shows exactly where things were stored + how to find them
 Session 50:  The agent knows your priorities, blind spots, and communication style
              — not because it was told, but because every correction compounded
 ```
 
 Each layer multiplies the others. Auto-naming makes indexing useful. Indexing makes relativity possible. Relativity makes recall precise. Precise recall generates meaningful feedback. Feedback makes the next recall even better. The loop compounds.
+
+**Stemming + synonyms:** Search understands that "deploying" matches "deployment," "ship," and "release." A 19-rule suffix stemmer + 100-pair synonym table for development terms — no vector DB needed, zero external dependencies.
 
 ---
 
@@ -1435,7 +1444,7 @@ Agent 写入: "JWT 刷新令牌轮换防止会话固定攻击"
 
 无反馈的条目保持中性（×1.0）。反馈是查询感知的 — 把一条结果标记为"对认证设计没用"不会惩罚它在"数据库设计"中的表现。系统按上下文学习，而非全局惩罚。
 
-> **注意：** 反馈回路（Beta 分布评分）已在评分引擎中实现，但尚无激活路径——目前没有 agent 或 hook 提交反馈信号。数学已就绪，接线尚未完成。
+> **反馈已自动运行。** ambient recall hook 追踪哪些记忆被浮现。如果人类的下一条消息是纠正 → 负反馈。如果不是 → 正反馈。无需 agent 主动操作——回路通过 `hook-ambient` UserPromptSubmit hook 在每条消息上运行。
 
 ### 复合效应
 

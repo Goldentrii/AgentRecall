@@ -99,6 +99,17 @@ export async function resolveProject(project: string | undefined): Promise<strin
 }
 
 /**
+ * Returns true if a filename is a journal entry (legacy or smart-named).
+ * Excludes log/capture files and index files.
+ */
+function isJournalFile(f: string): boolean {
+  if (!f.endsWith(".md")) return false;
+  if (f === "index.md") return false;
+  if (f.includes("-log.md") || f.includes("--capture--")) return false;
+  return /^\d{4}-\d{2}-\d{2}/.test(f);
+}
+
+/**
  * List all projects (from both new and legacy locations).
  */
 export function listAllProjects(): ProjectInfo[] {
@@ -111,14 +122,12 @@ export function listAllProjects(): ProjectInfo[] {
     for (const slug of dirs) {
       const jDir = path.join(projectsDir, slug, "journal");
       if (fs.existsSync(jDir)) {
-        const files = fs.readdirSync(jDir).filter((f) =>
-          /^\d{4}-\d{2}-\d{2}\.md$/.test(f)
-        );
+        const files = fs.readdirSync(jDir).filter(isJournalFile);
         if (files.length > 0) {
           files.sort().reverse();
           projects.set(slug, {
             slug,
-            lastEntry: files[0].replace(".md", ""),
+            lastEntry: files[0].slice(0, 10),
             entryCount: files.length,
           });
         }
@@ -138,14 +147,12 @@ export function listAllProjects(): ProjectInfo[] {
           const slug = parts[parts.length - 1] || entry;
 
           if (!projects.has(slug)) {
-            const files = fs.readdirSync(journalPath).filter((f) =>
-              /^\d{4}-\d{2}-\d{2}\.md$/.test(f)
-            );
+            const files = fs.readdirSync(journalPath).filter(isJournalFile);
             if (files.length > 0) {
               files.sort().reverse();
               projects.set(slug, {
                 slug,
-                lastEntry: files[0].replace(".md", ""),
+                lastEntry: files[0].slice(0, 10),
                 entryCount: files.length,
               });
             }

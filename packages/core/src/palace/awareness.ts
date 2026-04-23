@@ -39,10 +39,20 @@ export function writeAwareness(content: string): void {
     const p = awarenessPath();
     ensureDir(path.dirname(p));
 
-    // Enforce 200-line max
+    // Enforce 200-line max — truncate at section boundary, not mid-line
     const lines = content.split("\n");
     if (lines.length > MAX_LINES) {
-      const truncated = lines.slice(0, MAX_LINES).join("\n");
+      // Walk backwards from MAX_LINES to find the last clean section boundary
+      let cutAt = MAX_LINES;
+      for (let i = MAX_LINES - 1; i >= MAX_LINES - 20 && i >= 0; i--) {
+        const line = lines[i];
+        // Stop before a heading line (##) or blank line preceding one
+        if (line.startsWith("## ") || (line === "" && i + 1 < lines.length && lines[i + 1].startsWith("## "))) {
+          cutAt = i;
+          break;
+        }
+      }
+      const truncated = lines.slice(0, cutAt).join("\n");
       fs.writeFileSync(p, truncated + "\n", "utf-8");
     } else {
       fs.writeFileSync(p, content, "utf-8");

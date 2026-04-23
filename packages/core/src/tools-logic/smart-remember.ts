@@ -189,7 +189,17 @@ export async function smartRemember(input: SmartRememberInput): Promise<SmartRem
     if (typeof resultObj.file_path === "string") file_path = resultObj.file_path;
     // knowledge_write returns file
     else if (typeof resultObj.file === "string") file_path = resultObj.file;
-    // journal_capture doesn't return a path — construct from date
+    // awareness_update → show awareness.md path
+    else if (route === "awareness_update") {
+      const root = process.env.HOME ? `${process.env.HOME}/.agent-recall` : "~/.agent-recall";
+      file_path = `${root}/awareness.md`;
+    }
+    // journal_capture → show journal directory
+    else if (route === "journal_capture") {
+      const root = process.env.HOME ? `${process.env.HOME}/.agent-recall` : "~/.agent-recall";
+      const slug = input.project ?? "auto";
+      file_path = `${root}/projects/${slug}/journal/${new Date().toISOString().slice(0, 10)}-log.md`;
+    }
   }
 
   // Replace home dir for readability

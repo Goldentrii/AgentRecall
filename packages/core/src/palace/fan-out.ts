@@ -69,6 +69,8 @@ export function fanOut(
   }
 
   // ── Auto-link by keywords (no wikilinks needed) ──────────────────────
+  // Match content keywords against: room tags + room name + actual content in room files.
+  // Room tags alone are too sparse (e.g. ['learning']) to create useful connections.
   const contentKeywords = extractKeywords(content, 5);
   if (contentKeywords.length >= 2) {
     const allRooms = listRooms(project);
@@ -77,7 +79,24 @@ export function fanOut(
       if (room.slug === sourceRoom || autoEdgeCount >= MAX_AUTO_EDGES) break;
       if (allTargets.has(room.slug)) continue; // already linked via wikilink
 
+      // Build keyword pool: tags + name words + keywords from room's actual content
       const roomKeywords = [...room.tags, ...room.name.toLowerCase().split(/\s+/)];
+
+      // Read first 300 chars from up to 3 room files for content-based matching
+      try {
+        const roomPath = path.join(pd, "rooms", room.slug);
+        if (fs.existsSync(roomPath)) {
+          const files = fs.readdirSync(roomPath)
+            .filter(f => f.endsWith(".md") && f !== "README.md" && f !== "_room.json")
+            .slice(0, 3);
+          for (const f of files) {
+            const fileContent = fs.readFileSync(path.join(roomPath, f), "utf-8").slice(0, 300);
+            const fileKw = extractKeywords(fileContent, 3);
+            roomKeywords.push(...fileKw);
+          }
+        }
+      } catch { /* non-blocking */ }
+
       const overlap = contentKeywords.filter((k) =>
         roomKeywords.some((rk) => rk.includes(k) || k.includes(rk))
       );

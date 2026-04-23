@@ -101,6 +101,22 @@ const SYNONYM_GROUPS: string[][] = [
   ["correction", "feedback", "wrong", "mistake", "adjust"],
   ["remember", "memory", "recall", "context", "history"],
   ["insight", "lesson", "pattern", "observation", "learning"],
+
+  // Design & UI
+  ["color", "colour", "palette", "theme", "scheme", "brand"],
+  ["dark", "light", "mode", "background", "foreground"],
+  ["font", "typography", "typeface", "heading", "body-text"],
+  ["layout", "grid", "flex", "spacing", "gap", "margin", "padding"],
+  ["icon", "svg", "lucide", "image", "asset", "logo"],
+  ["button", "cta", "action", "click", "submit"],
+  ["modal", "dialog", "popup", "overlay", "drawer"],
+  ["nav", "navbar", "sidebar", "menu", "navigation", "header"],
+  ["card", "tile", "panel", "section", "container"],
+
+  // Scraping & data
+  ["scrape", "scraper", "crawl", "crawler", "extract", "extraction"],
+  ["proxy", "residential", "datacenter", "rotation", "ip"],
+  ["website", "site", "page", "url", "domain", "web"],
 ];
 
 // Build a reverse lookup: word → set of all synonyms

@@ -2,11 +2,12 @@
 name: agent-recall
 description: >-
   Persistent compounding memory for AI agents. 6 MCP tools: session_start,
-  remember, recall, session_end, check, digest. Auto-naming, feedback loop,
-  correction capture, cross-project insight matching. Stores everything as
-  local markdown. Zero cloud, zero telemetry, Obsidian-compatible.
+  remember, recall, session_end, check, digest. Correction-first memory with
+  watch_for warnings, palace rooms with salience scoring, cross-project insight
+  matching, same-day journal merging, ambient recall hooks. Local markdown only.
+  Zero cloud, zero telemetry, Obsidian-compatible.
 origin: community
-version: 3.3.17
+version: 3.3.27
 author: Goldentrii
 platform: clawhub
 install:
@@ -56,7 +57,7 @@ skip:
   - "算了"
 ---
 
-# AgentRecall v3.3.17 — Usage Guide
+# AgentRecall v3.3.27 — Usage Guide
 
 AgentRecall is a persistent memory system with 6 MCP tools. This guide describes how and when to use them.
 
@@ -325,16 +326,18 @@ All data is local markdown + JSON at `~/.agent-recall/`. No cloud, no telemetry,
 
 ```
 ~/.agent-recall/
-  awareness.md                  # 200-line compounding document (global)
-  awareness-state.json          # Structured awareness data
-  awareness-archive.json        # Demoted insights (preserved, not deleted)
-  insights-index.json           # Cross-project insight matching
-  feedback-log.json             # Retrieval quality ratings
+  awareness.md                              # 200-line compounding document (global)
+  awareness-state.json                      # Structured awareness data
+  awareness-archive.json                    # Demoted insights (preserved, not deleted)
+  insights-index.json                       # Cross-project insight matching
+  feedback-log.json                         # Retrieval quality ratings
   projects/<name>/
-    journal/YYYY-MM-DD.md       # Daily journals
-    palace/rooms/<room>/        # Persistent knowledge rooms
-    palace/graph.json           # Memory connection edges
-    alignment-log.json          # Correction history for watch_for
+    journal/YYYY-MM-DD.md                   # Daily journals (legacy)
+    journal/YYYY-MM-DD--arsave--NL--slug.md # Smart-named journals (auto-save)
+    palace/rooms/<room>/                    # Persistent knowledge rooms
+    palace/identity.md                      # Project intention + goals
+    palace/graph.json                       # Memory connection edges
+    alignment-log.json                      # Correction history for watch_for
 ```
 
 Obsidian-compatible. Open `palace/` as a vault to see the knowledge graph.
@@ -368,4 +371,4 @@ All platforms use the same tools. No platform-specific behavior.
 - **Scoped filesystem access:** Reads/writes only to `~/.agent-recall/` (configurable via `--root` flag). Does not access files outside this directory unless the agent explicitly passes project-specific paths.
 - **No code execution:** The MCP server does not execute arbitrary code, run shell commands, or spawn child processes.
 - **Transparent storage:** All data is human-readable markdown and JSON. Inspect it anytime: `ls ~/.agent-recall/` or open it as an Obsidian vault.
-- **Open source:** Full source at [github.com/Goldentrii/AgentRecall](https://github.com/Goldentrii/AgentRecall). MIT license. 194 tests.
+- **Open source:** Full source at [github.com/Goldentrii/AgentRecall](https://github.com/Goldentrii/AgentRecall). MIT license.

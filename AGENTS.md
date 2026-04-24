@@ -60,6 +60,23 @@ AgentRecall gives you persistent memory across sessions via 6 MCP tools.
 
 ---
 
+## MCP Tool → CLI Equivalent
+
+If you don't have MCP available, use the `ar` CLI instead:
+
+| MCP Tool | CLI Command | Notes |
+|----------|-------------|-------|
+| `session_start` | `ar cold-start` | Loads context for current project |
+| `remember` | `ar write "<content>"` | Freeform journal entry. `ar capture "<question>" "<answer>"` for Q&A format |
+| `recall` | `ar recall "<query>"` | Search palace + journal. Alias: `ar insight "<query>"` |
+| `session_end` | `ar saveall` | Batch-saves all today's sessions; or `ar write "<summary>"` for manual entry |
+| `check` | *(no CLI equivalent)* | MCP only — correction tracking via hook-correction hook |
+| `digest` | `ar digest recall "<query>"` | Also: `ar digest store`, `ar digest list`. MCP preferred for atomic store+retrieve |
+
+> Note: `ar remember` does not exist. Use `ar write` for freeform notes or `ar capture` for Q&A pairs.
+
+---
+
 ## Project Slugs
 
 Projects live at `~/.agent-recall/projects/<slug>/`. Common slugs:

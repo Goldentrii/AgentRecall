@@ -16,7 +16,7 @@ import { journalDir, palaceDir } from "../storage/paths.js";
 import { ensureDir, todayISO } from "../storage/fs-utils.js";
 import { listJournalFiles } from "../helpers/journal-files.js";
 import { extractSection } from "../helpers/sections.js";
-import { ensurePalaceInitialized, roomExists, createRoom, updateRoomMeta } from "./rooms.js";
+import { ensurePalaceInitialized, roomExists, createRoom, updateRoomMeta, touchRoom } from "./rooms.js";
 import { fanOut } from "./fan-out.js";
 import { generateFrontmatter } from "./obsidian.js";
 import { updatePalaceIndex } from "./index-manager.js";
@@ -100,12 +100,14 @@ export function consolidateJournalToPalace(
         const existing = fs.readFileSync(topicPath, "utf-8");
         if (existing.includes(`### ${entry.date}`)) continue;
         fs.appendFileSync(topicPath, memoryEntry, "utf-8");
+        touchRoom(project, route.room);
       } else {
         fs.writeFileSync(
           topicPath,
           `${fm}# ${route.room} / ${route.topic}\n${memoryEntry}`,
           "utf-8"
         );
+        touchRoom(project, route.room);
       }
 
       // Update room metadata
@@ -132,11 +134,13 @@ export function consolidateJournalToPalace(
         const existing = fs.readFileSync(evoPath, "utf-8");
         if (!existing.includes(`### ${entry.date}`)) {
           fs.appendFileSync(evoPath, evoEntry, "utf-8");
+          touchRoom(project, "goals");
           result.memoriesCreated++;
         }
       } else {
         const fm = generateFrontmatter({ room: "goals", topic: "evolution", created: new Date().toISOString(), source: "consolidation" });
         fs.writeFileSync(evoPath, `${fm}# goals / evolution\n${evoEntry}`, "utf-8");
+        touchRoom(project, "goals");
         result.memoriesCreated++;
       }
       updatedRooms.add("goals");

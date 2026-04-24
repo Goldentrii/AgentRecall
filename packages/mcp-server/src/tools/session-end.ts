@@ -19,10 +19,40 @@ export function register(server: McpServer): void {
     },
   }, async ({ summary, insights, trajectory, project }) => {
     const result = await sessionEnd({ summary, insights, trajectory, project, saveType: "arsave" });
+
+    const jsonPayload = JSON.stringify({
+      success: result.success,
+      journal_written: result.journal_written,
+      insights_processed: result.insights_processed,
+      awareness_updated: result.awareness_updated,
+      palace_consolidated: result.palace_consolidated,
+    });
+
+    // Prepend advisory quality warnings if any insights failed quality checks
+    if (result.quality_warnings && result.quality_warnings.length > 0) {
+      const warningLines = result.quality_warnings.map(
+        (w) => `- Insight ${w.index} "${w.title}": ${w.issues.join("; ")}. Suggestion: ${w.suggestion}`
+      );
+      const warningBlock = [
+        "⚠ Insight Quality Warnings (save proceeded — these are advisory):",
+        ...warningLines,
+        "",
+        "---",
+      ].join("\n");
+
+      return {
+        content: [
+          { type: "text" as const, text: warningBlock },
+          { type: "text" as const, text: result.card },
+          { type: "text" as const, text: jsonPayload },
+        ],
+      };
+    }
+
     // Return card as primary text (agent displays it directly), JSON as secondary
     return { content: [
       { type: "text" as const, text: result.card },
-      { type: "text" as const, text: JSON.stringify({ success: result.success, journal_written: result.journal_written, insights_processed: result.insights_processed, awareness_updated: result.awareness_updated, palace_consolidated: result.palace_consolidated }) },
+      { type: "text" as const, text: jsonPayload },
     ] };
   });
 }

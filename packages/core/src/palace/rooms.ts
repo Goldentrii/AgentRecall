@@ -145,3 +145,17 @@ export function recordAccess(project: string, roomSlug: string): void {
     last_accessed: new Date().toISOString(),
   });
 }
+
+/** Touch the room's updated timestamp. Call after writing any markdown file in the room. */
+export function touchRoom(project: string, roomSlug: string): void {
+  const meta = getRoomMeta(project, roomSlug);
+  if (!meta) return;
+  updateRoomMeta(project, roomSlug, { updated: new Date().toISOString() });
+}
+
+/** Returns true if the room has not been updated in the last `daysThreshold` days. */
+export function isRoomStale(meta: RoomMeta, daysThreshold = 7): boolean {
+  const updatedMs = new Date(meta.updated).getTime();
+  const thresholdMs = Date.now() - daysThreshold * 24 * 60 * 60 * 1000;
+  return updatedMs < thresholdMs;
+}

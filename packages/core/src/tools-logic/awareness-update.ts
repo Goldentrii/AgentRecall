@@ -16,6 +16,7 @@ export interface AwarenessUpdateInput {
     source: string;
     severity?: "critical" | "important" | "minor";
   }>;
+  project?: string;
   trajectory?: string;
   blind_spots?: string[];
   identity?: string;
@@ -52,6 +53,7 @@ export async function awarenessUpdate(input: AwarenessUpdateInput): Promise<Awar
       title: insight.title,
       source: insight.source,
       applies_when: insight.applies_when,
+      projects: input.project ? [input.project] : undefined,
       file: undefined,
       severity: insight.severity ?? "important",
     });

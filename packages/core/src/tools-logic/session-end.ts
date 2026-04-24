@@ -39,6 +39,13 @@ export interface MergeSuggestion {
   reason: string;
 }
 
+export interface InsightQualityWarning {
+  index: number;
+  title: string;
+  issues: string[];
+  suggestion: string;
+}
+
 export interface SessionEndResult {
   success: boolean;
   journal_written: boolean;
@@ -48,6 +55,56 @@ export interface SessionEndResult {
   palace_consolidated: boolean;
   card: string;
   merge_suggestions?: MergeSuggestion[];
+  quality_warnings?: InsightQualityWarning[];
+}
+
+export function checkInsightQuality(
+  insights: SessionEndInput["insights"]
+): InsightQualityWarning[] {
+  if (!insights || insights.length === 0) return [];
+  const warnings: InsightQualityWarning[] = [];
+
+  for (let i = 0; i < insights.length; i++) {
+    const insight = insights[i];
+    const issues: string[] = [];
+
+    // Rule 1: Title too short (< 20 chars) — almost always too vague to be useful
+    if (insight.title.trim().length < 20) {
+      issues.push("Title too short (< 20 chars) — likely too vague to be useful");
+    }
+
+    // Rule 2: Title starts with a past-tense event verb with no outcome described
+    if (
+      /^(fixed|resolved|updated|added|removed|changed)\s+\w/i.test(insight.title.trim()) &&
+      insight.title.length < 50
+    ) {
+      issues.push(
+        "Title describes an event ('fixed X'), not a reusable pattern — state what was learned, not what was done"
+      );
+    }
+
+    // Rule 3: Evidence too short (< 15 chars) — not enough to validate the insight
+    if (!insight.evidence || insight.evidence.trim().length < 15) {
+      issues.push("Evidence too short — add what specifically happened that confirmed this insight");
+    }
+
+    // Rule 4: applies_when has fewer than 2 keywords — too broad
+    if (!insight.applies_when || insight.applies_when.length < 2) {
+      issues.push(
+        "applies_when needs at least 2 keywords — when exactly would a future agent apply this?"
+      );
+    }
+
+    if (issues.length > 0) {
+      let suggestion = "Rewrite as: '[Specific trigger/condition] — [concrete fact + what to do]'";
+      if (issues[0].includes("event")) {
+        suggestion = `Instead of '${insight.title}', try: 'When [condition], [concrete outcome/action]'`;
+      }
+      warnings.push({ index: i, title: insight.title, issues, suggestion });
+    }
+  }
+
+  return warnings;
 }
 
 export async function sessionEnd(input: SessionEndInput): Promise<SessionEndResult> {
@@ -116,6 +173,7 @@ export async function sessionEnd(input: SessionEndInput): Promise<SessionEndResu
           source: i.source ?? `session_end ${new Date().toISOString().slice(0, 10)}`,
           severity: i.severity,
         })),
+        project: slug,
         trajectory: input.trajectory,
       });
       insightsProcessed = result.insights_processed?.length ?? input.insights.length;
@@ -251,6 +309,8 @@ export async function sessionEnd(input: SessionEndInput): Promise<SessionEndResu
 
   const card = cardLines.join("\n");
 
+  const qualityWarnings = checkInsightQuality(input.insights ?? []);
+
   return {
     success: journalWritten || awarenessUpdated,
     journal_written: journalWritten,
@@ -260,5 +320,6 @@ export async function sessionEnd(input: SessionEndInput): Promise<SessionEndResu
     palace_consolidated: palaceConsolidated,
     card,
     merge_suggestions: mergeSuggestions.length > 0 ? mergeSuggestions : undefined,
+    quality_warnings: qualityWarnings.length > 0 ? qualityWarnings : undefined,
   };
 }

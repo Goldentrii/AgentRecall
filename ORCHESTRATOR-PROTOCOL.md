@@ -256,16 +256,40 @@ prompt: "Fix ONE issue. File: X. Line: Y. Current code: [paste]. Fix: [paste]. R
 
 ### Minor issues left open (not blocking merge)
 
-1. `isRoomStale()` exported but callers inline the same logic — 7-day threshold defined in 3 places. Refactor to use the exported helper.
-2. `project_status` MCP returns raw JSON. Should add `formatProjectStatus()` like `session_start` has `formatSessionStart()`.
-3. `sessions_count` counts files not unique days — cosmetic inflation on heavy-save days.
+1. `project_status` MCP returns raw JSON. Should add `formatProjectStatus()` like `session_start` has `formatSessionStart()`.
+2. `sessions_count` counts files not unique days — cosmetic inflation on heavy-save days.
+
+### Next loop: Decision trail enhancement for `check` tool
+
+**Inspiration:** @yaojingang's Bayesian Decision Skill (github.com/yaojingang/yao) — multi-round prior→posterior updating with structured audit trail. 286 likes, 440 bookmarks. We don't copy the full Bayesian math — we steal the decision trail pattern.
+
+**What to build (3 agents):**
+
+**Agent 1 — Enhance `check` tool input/output** (`tools-logic/check.ts`)
+- Add optional fields to CheckInput: `prior?: number` (0-1), `evidence?: Array<{ factor: string; direction: "supports" | "weakens"; weight: number }>`, `posterior?: number`
+- Return type adds: `decision_trail` summary when prior+posterior both present
+- Backward compatible — existing `check({ goal, confidence })` calls still work unchanged
+
+**Agent 2 — Decision trail persistence** (`tools-logic/check.ts` + `palace/`)
+- When a `check` call includes `prior` + `posterior` + `outcome` (new optional field), persist as `palace/rooms/decisions/<slug>.md`
+- Format: YAML frontmatter with prior/posterior/outcome/date + body with evidence chain
+- Obsidian-compatible (existing palace file format)
+
+**Agent 3 — Decision calibration in watch_for** (`helpers/alignment-patterns.ts` + `session-start.ts`)
+- Read decision trail records from palace
+- Compute calibration: "your priors on <category> average X, outcomes average Y"
+- Surface as a `watch_for` entry when agent is about to make a similar decision
+- Example: `"Prior confidence on API design decisions tends to be overconfident (avg prior 0.8, avg outcome 0.5) — corrected 3×"`
+
+**Conflict matrix:**
+- Agent 1 + 2 share `check.ts` → merge into one agent OR run sequentially
+- Agent 3 owns `alignment-patterns.ts` + adds to `session-start.ts` watch_for output
 
 ### Remaining open work (from palace/goals)
 
 - Context cache + pre-digest summaries for token savings (AR v3.4 direction)
 - Validate genome on a new live site
 - LobeHub marketplace submission
-- Consider wiring `resurrectFromArchive()` into `addInsight()` (implemented but never called)
 - Consider wiring `getConnectedRooms()` into `palaceSearch()` (implemented but never called)
 
 ### Key architecture decisions (do not reverse)

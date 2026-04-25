@@ -47,6 +47,11 @@ export async function awarenessUpdate(input: AwarenessUpdateInput): Promise<Awar
       appliesWhen: insight.applies_when,
       source: insight.source,
     });
+    // Rejected by quality gate — record reason, skip indexing
+    if ("accepted" in result) {
+      results.push({ title: insight.title, action: `rejected:${result.reason}` });
+      continue;
+    }
     results.push({ title: insight.title, action: result.action });
 
     addIndexedInsight({

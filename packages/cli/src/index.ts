@@ -799,8 +799,13 @@ async function main(): Promise<void> {
         let out = "[AgentRecall] Relevant past context:\n";
         for (const item of items) {
           const source = item.source ?? "memory";
-          const title = (item.title ?? item.excerpt ?? "").slice(0, 80).replace(/\n/g, " ");
-          out += `• [${source}] ${title}\n`;
+          const title = (item.title ?? "").slice(0, 80).replace(/\n/g, " ");
+          const rawExcerpt = (item.excerpt ?? "").replace(/\n/g, " ").trim();
+          const excerpt = rawExcerpt.length > 120
+            ? rawExcerpt.slice(0, 120) + "…"
+            : rawExcerpt;
+          const suffix = excerpt ? ` — ${excerpt}` : "";
+          out += `• [${source}] ${title}${suffix}\n`;
         }
         process.stdout.write(out);
 

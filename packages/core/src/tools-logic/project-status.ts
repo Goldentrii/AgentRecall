@@ -8,11 +8,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolveProject } from "../storage/project.js";
-import { listRooms } from "../palace/rooms.js";
+import { listRooms, isRoomStale } from "../palace/rooms.js";
 import { journalDirs, palaceDir } from "../storage/paths.js";
 import { extractSection } from "../helpers/sections.js";
-
-const STALE_DAYS = 7;
 
 export interface ProjectStatusInput {
   project?: string;
@@ -60,16 +58,11 @@ export async function projectStatus(input: ProjectStatusInput): Promise<ProjectS
 
   // 1. Palace rooms — list all, compute stale flag
   const rooms = listRooms(slug);
-  const now = Date.now();
-  const palace_rooms = rooms.map((r) => {
-    const updatedMs = new Date(r.updated).getTime();
-    const daysDiff = (now - updatedMs) / (1000 * 60 * 60 * 24);
-    return {
-      name: r.name,
-      updated: r.updated.slice(0, 10),
-      stale: daysDiff > STALE_DAYS,
-    };
-  });
+  const palace_rooms = rooms.map((r) => ({
+    name: r.name,
+    updated: r.updated.slice(0, 10),
+    stale: isRoomStale(r),
+  }));
 
   // 2. Active blockers — read palace/rooms/blockers/ markdown files
   const pd = palaceDir(slug);

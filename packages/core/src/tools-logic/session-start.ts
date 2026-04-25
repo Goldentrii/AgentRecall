@@ -6,7 +6,7 @@
  */
 
 import { resolveProject } from "../storage/project.js";
-import { ensurePalaceInitialized, listRooms } from "../palace/rooms.js";
+import { ensurePalaceInitialized, listRooms, isRoomStale } from "../palace/rooms.js";
 import { readIdentity } from "../palace/identity.js";
 import { readAwarenessState } from "../palace/awareness.js";
 import { recallInsights, readInsightsIndex } from "../palace/insights-index.js";
@@ -81,15 +81,13 @@ export async function sessionStart(input: SessionStartInput): Promise<SessionSta
   }));
 
   // 3. Active rooms — top 5 by salience
-  const STALE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-  const now = Date.now();
   const rooms = listRooms(slug).slice(0, 5);
   const active_rooms: Array<{ name: string; salience: number; one_liner: string; topics?: string[]; last_updated: string; stale: boolean }> = rooms.map((r) => ({
     name: r.name,
     salience: r.salience,
     one_liner: sliceAtWord(r.description, 200),
     last_updated: r.updated,
-    stale: now - new Date(r.updated).getTime() > STALE_MS,
+    stale: isRoomStale(r),
   }));
 
   // 3b. Populate topics from room description (clean semantic labels)

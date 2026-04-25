@@ -196,7 +196,13 @@ export function initAwareness(identity: string): AwarenessState {
  */
 export function addInsight(
   newInsight: Omit<Insight, "id" | "confirmations" | "lastConfirmed">
-): { action: "merged" | "added" | "replaced"; insight: Insight } {
+): { action: "merged" | "added" | "replaced"; insight: Insight } | { accepted: false; reason: string } {
+  // ── Quality gate — reject obviously bad insights ──────────────────────────
+  const title = newInsight.title?.trim() ?? "";
+  if (title.split(/\s+/).filter(Boolean).length < 3) return { accepted: false, reason: "title_too_short" };
+  if (/^test\s+insight/i.test(title)) return { accepted: false, reason: "test_fixture" };
+  if (!newInsight.evidence || newInsight.evidence.trim().length < 5) return { accepted: false, reason: "no_evidence" };
+
   let state = readAwarenessState();
   if (!state) {
     state = initAwareness("(unknown user)");
@@ -206,7 +212,34 @@ export function addInsight(
 
   // Keyword-based matching (uses auto-name extractKeywords instead of raw word split)
   // Use limit=6 for broader matching coverage
-  const newKeywords = extractKeywords(newInsight.title, 6);
+  const newKeywords = extractKeywords(title, 6);
+
+  // ── Resurrect from archive if this insight was previously demoted ─────────
+  // Skip if an insight with the same ID already exists in topInsights (dedup)
+  const resurrected = resurrectFromArchive(newKeywords);
+  if (resurrected && !state.topInsights.some((i) => i.id === resurrected.id)) {
+    // resurrectFromArchive already bumps confirmations by 1 — don't double-bump
+    resurrected.lastConfirmed = now;
+    if (!resurrected.evidence.includes(newInsight.evidence.slice(0, 40))) {
+      const merged = `${resurrected.evidence} | ${newInsight.evidence}`;
+      resurrected.evidence = merged.length > 500 ? merged.slice(0, 500) : merged;
+    }
+    for (const aw of newInsight.appliesWhen) {
+      if (!resurrected.appliesWhen.includes(aw)) {
+        resurrected.appliesWhen.push(aw);
+      }
+    }
+    state.topInsights.push(resurrected);
+    // Enforce 15-item cap — demote lowest if over limit
+    if (state.topInsights.length > 15) {
+      state.topInsights.sort((a, b) => b.confirmations - a.confirmations);
+      const demoted = state.topInsights.pop()!;
+      archiveInsight(demoted);
+    }
+    writeAwarenessState(state);
+    renderAwareness(state);
+    return { action: "added", insight: resurrected };
+  }
 
   let bestMatch: { idx: number; overlap: number } | null = null;
   for (let i = 0; i < state.topInsights.length; i++) {

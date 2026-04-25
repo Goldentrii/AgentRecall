@@ -1,13 +1,14 @@
 ---
 name: agent-recall
 description: >-
-  Persistent compounding memory for AI agents. 6 MCP tools: session_start,
-  remember, recall, session_end, check, digest. Correction-first memory with
+  Persistent compounding memory for AI agents. 8 MCP tools: session_start,
+  remember, recall, session_end, check, digest, project_board, project_status.
+  Correction-first memory with decision trail tracking,
   watch_for warnings, palace rooms with salience scoring, cross-project insight
   matching, same-day journal merging, ambient recall hooks. Local markdown only.
   Zero cloud, zero telemetry, Obsidian-compatible.
 origin: community
-version: 3.3.27
+version: 3.3.28
 author: Goldentrii
 platform: clawhub
 install:
@@ -57,9 +58,9 @@ skip:
   - "算了"
 ---
 
-# AgentRecall v3.3.27 — Usage Guide
+# AgentRecall v3.3.28 — Usage Guide
 
-AgentRecall is a persistent memory system with 6 MCP tools. This guide describes how and when to use them.
+AgentRecall is a persistent memory system with 8 MCP tools. This guide describes how and when to use them.
 
 ## Setup
 
@@ -125,11 +126,13 @@ AgentRecall provides these MCP tools:
 **What it returns:**
 - `project` — detected project name
 - `identity` — who the user is (1-2 lines)
-- `insights` — top 5 awareness insights (title + confirmation count)
-- `active_rooms` — top 3 palace rooms by salience
+- `insights` — top 5 awareness insights (title + confirmation count + severity)
+- `active_rooms` — top 5 palace rooms by salience (with staleness flag + last_updated)
 - `cross_project` — insights from other projects matching current context
 - `recent` — today/yesterday journal briefs
-- `watch_for` — predictive warnings from past correction patterns
+- `watch_for` — predictive warnings from past correction patterns + decision calibration
+- `corrections` — P0 behavioral rules (max 10, always loaded, never expire)
+- `resume` — structured re-entry briefing: `last_date`, `last_trajectory`, `sessions_count`
 
 **How to use the response:**
 1. Read `identity` to calibrate your tone and approach
@@ -225,20 +228,22 @@ session_end({
 - `awareness_updated` — boolean, true if any insight was stored
 - `palace_consolidated` — boolean, true if palace rooms were updated
 - `insights_processed` — number of insights accepted
+- `quality_warnings` — advisory warnings if insights are too short, lack evidence, or use event-verb phrasing (never blocks saves)
 - `card` — formatted save summary (box-drawing card)
 - `merge_suggestions` — array of similar recent entries (optional)
 
 ### `check`
 
-**When:** Before executing a complex task where you might misunderstand the human's intent.
+**When:** Before executing a complex task where you might misunderstand the human's intent. Also for tracking decision quality over time.
 
 **What it does:**
 - Records your understanding of the goal
 - Returns `watch_for` — patterns from past corrections on this project
 - Returns `similar_past_deltas` — times you misunderstood similar goals before
 - After human responds, record the correction for future agents
+- Optionally tracks decision trails with prior/posterior/evidence for calibrated judgment
 
-**Two-call pattern:**
+**Two-call pattern (correction tracking):**
 
 Call 1 — before work:
 ```
@@ -262,6 +267,47 @@ check({
 ```
 
 This feeds the predictive system. Future agents on this project will get warnings.
+
+**Decision trail (Bayesian-inspired calibration):**
+
+For major decisions, track confidence and outcome to calibrate judgment over time:
+```
+check({
+  goal: "Use GraphQL instead of REST",
+  confidence: "medium",
+  prior: 0.7,                    // initial confidence (0-1)
+  evidence: [
+    { factor: "Frontend needs flexible queries", direction: "supports", weight: 0.2 },
+    { factor: "No GraphQL experience on team", direction: "weakens", weight: 0.3 }
+  ],
+  posterior: 0.55,               // updated confidence after evidence
+  outcome: "rejected"            // final result: "confirmed", "rejected", "partial", or free text
+})
+```
+
+When `outcome` is provided, the decision trail is persisted to the palace `decisions` room. After 3+ closed decisions, `session_start` surfaces calibration warnings: "Your priors average 0.8 but outcomes average 0.5 — you're overconfident."
+
+**Returns:** `recorded`, `watch_for`, `similar_past_deltas`, `decision_id` (when outcome provided), `decision_trail_saved`, `calibration_note`
+
+### `project_board`
+
+**When:** Start of a new session when you don't know which project to work on.
+
+**What it does:** Scans all projects and returns a status board — last activity date, pending work, active blockers. Use this before `session_start` to pick which project to load.
+
+```
+project_board()
+```
+
+### `project_status`
+
+**When:** Quick check on a specific project's health without loading full context.
+
+**What it returns:** Last trajectory, active blockers, palace room freshness (stale flag), next steps, summary line. Lighter than `session_start` — no awareness or cross-project loading.
+
+```
+project_status({ project: "auto" })
+```
 
 ---
 
@@ -343,9 +389,11 @@ All data is local markdown + JSON at `~/.agent-recall/`. No cloud, no telemetry,
     journal/YYYY-MM-DD.md                   # Daily journals (legacy)
     journal/YYYY-MM-DD--arsave--NL--slug.md # Smart-named journals (auto-save)
     palace/rooms/<room>/                    # Persistent knowledge rooms
+    palace/rooms/decisions/                 # Decision trail records (prior/posterior/outcome)
     palace/identity.md                      # Project intention + goals
     palace/graph.json                       # Memory connection edges
     alignment-log.json                      # Correction history for watch_for
+    digest/                                 # Pre-digested context summaries
 ```
 
 Obsidian-compatible. Open `palace/` as a vault to see the knowledge graph.

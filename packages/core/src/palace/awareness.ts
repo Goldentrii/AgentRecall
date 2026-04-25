@@ -68,6 +68,7 @@ export interface Insight {
   lastConfirmed: string;
   appliesWhen: string[];
   source: string;
+  severity?: "critical" | "important" | "minor";
 }
 
 export interface CompoundInsight {
@@ -313,6 +314,7 @@ export function addInsight(
     lastConfirmed: now,
     appliesWhen: newInsight.appliesWhen,
     source: newInsight.source,
+    severity: (newInsight as { severity?: "critical" | "important" | "minor" }).severity,
   };
 
   if (state.topInsights.length < 15) {

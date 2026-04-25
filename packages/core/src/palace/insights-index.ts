@@ -79,6 +79,13 @@ export function addIndexedInsight(insight: Omit<IndexedInsight, "id" | "confirme
         existing.applies_when.push(aw);
       }
     }
+    // Merge projects
+    if (insight.projects) {
+      existing.projects = [
+        ...(existing.projects ?? []),
+        ...insight.projects.filter((p) => !existing.projects?.includes(p)),
+      ];
+    }
     writeInsightsIndex(index);
     return existing;
   }

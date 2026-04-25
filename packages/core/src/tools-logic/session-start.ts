@@ -77,7 +77,7 @@ export async function sessionStart(input: SessionStartInput): Promise<SessionSta
   const insights = sortedInsights.slice(0, 5).map((i) => ({
     title: sliceAtWord(i.title, 200),
     confirmed: i.confirmations ?? 1,
-    severity: (i as { severity?: string }).severity ?? "important",
+    severity: i.severity ?? "important",
   }));
 
   // 3. Active rooms — top 5 by salience
@@ -105,7 +105,7 @@ export async function sessionStart(input: SessionStartInput): Promise<SessionSta
   const matched = recallInsights(context, 5);
   const cross_project = matched.map((i) => ({
     title: sliceAtWord(i.title, 100),
-    from_project: (i.projects?.[0] ?? i.source ?? "unknown").slice(0, 30),
+    from_project: (i.projects?.[0] ?? (i.source ?? "unknown").replace(/\s+\d{4}-\d{2}-\d{2}.*$/, "")).slice(0, 30),
     relevance: Math.round((i.relevance ?? 0) * 100) / 100,
   }));
 

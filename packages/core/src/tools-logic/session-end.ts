@@ -165,6 +165,9 @@ export async function sessionEnd(input: SessionEndInput): Promise<SessionEndResu
   // 2. Update awareness with insights
   if (input.insights && input.insights.length > 0) {
     try {
+      const scopedTrajectory = input.trajectory
+        ? `${slug}: ${input.trajectory}`
+        : undefined;
       const result = await awarenessUpdate({
         insights: input.insights.map((i) => ({
           title: i.title,
@@ -174,7 +177,7 @@ export async function sessionEnd(input: SessionEndInput): Promise<SessionEndResu
           severity: i.severity,
         })),
         project: slug,
-        trajectory: input.trajectory,
+        trajectory: scopedTrajectory,
       });
       insightsProcessed = result.insights_processed?.length ?? input.insights.length;
       awarenessUpdated = true;

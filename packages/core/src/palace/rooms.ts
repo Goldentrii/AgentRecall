@@ -97,7 +97,15 @@ export function ensurePalaceInitialized(project: string): void {
   const pd = palaceDir(project);
   const indexPath = path.join(pd, "palace-index.json");
 
-  if (fs.existsSync(indexPath)) return; // already initialized
+  if (fs.existsSync(indexPath)) {
+    try {
+      JSON.parse(fs.readFileSync(indexPath, "utf-8"));
+      return; // valid JSON — already initialized
+    } catch {
+      // Corrupt index — remove and regenerate
+      fs.unlinkSync(indexPath);
+    }
+  }
 
   ensureDir(pd);
   ensureDir(path.join(pd, "rooms"));

@@ -129,6 +129,7 @@ AgentRecall provides these MCP tools:
 - `identity` — who the user is (1-2 lines)
 - `insights` — top 5 awareness insights (title + confirmation count + severity)
 - `active_rooms` — top 5 palace rooms by salience (with staleness flag + last_updated)
+  _(Palace = your project's long-term knowledge store, organized into topic rooms like "architecture", "goals", "blockers". Salience = relevance score 0-1 based on recency, access frequency, and connections. Rooms with stale=true haven't been updated in 7+ days.)_
 - `cross_project` — insights from other projects matching current context
 - `recent` — today/yesterday journal briefs
 - `watch_for` — predictive warnings from past correction patterns + decision calibration
@@ -377,6 +378,7 @@ ar bootstrap --import --project my-app  # import one project
 ### During work
 ```
 4. remember() when you learn something   → auto-routes to right store
+                                           (stores: journal for daily activity, palace rooms for persistent decisions, awareness for cross-project insights)
 5. recall() when you need past context   → searches everything
 6. check() before major decisions        → verify understanding
 ```
@@ -426,6 +428,7 @@ COMPOUND: After 10 sessions
 7. **Use `check` for ambiguous tasks.** 5 seconds of verification beats 30 minutes of wrong work.
 8. **Read `watch_for` warnings.** If `session_start` or `check` returns warnings, adjust your approach.
 9. **Run bootstrap on first install.** If `/arstatus` shows no projects, `bootstrap_scan` discovers what's already on your machine and imports it in seconds.
+10. **Check active_rooms in session_start.** Palace rooms with high salience contain your project's most important decisions and patterns. Rooms marked stale may need updating.
 
 ---
 

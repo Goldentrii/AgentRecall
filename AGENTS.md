@@ -1,6 +1,6 @@
 # AgentRecall — Codex Agent Instructions
 
-AgentRecall gives you persistent memory across sessions via 6 MCP tools.
+AgentRecall gives you persistent memory across sessions via 10 MCP tools.
 
 **Semi-manual mode: only use these tools when the user explicitly asks. Do not load memory automatically at session start.**
 
@@ -16,6 +16,10 @@ AgentRecall gives you persistent memory across sessions via 6 MCP tools.
 | `remember` | User says: "remember this", "save this decision", "note this down" |
 | `check` | User says: "check this against memory", or before irreversible actions (deploy, publish, delete) |
 | `digest` | User says: "summarize my project", "give me a quick brief on X" |
+| `project_board` | User says: "show my projects", "list all projects", "what projects do I have" |
+| `project_status` | User says: "project status for X", "how is project X going", "status of [project]" |
+| `bootstrap_scan` | User says: "scan my notes", "import existing notes", "bootstrap from [path]" |
+| `bootstrap_import` | User says: "import these notes", "load notes from [path]" (used after `bootstrap_scan`) |
 
 ---
 
@@ -43,6 +47,22 @@ AgentRecall gives you persistent memory across sessions via 6 MCP tools.
 **Checkpoint (mid-session):**
 > "checkpoint" / "quick save"
 → Call `session_end` with a lightweight summary: "Checkpoint: just completed X, next is Y"
+
+**View all projects:**
+> "show my projects" / "list all projects" / "what projects do I have"
+→ Call `project_board()`
+→ Show: all tracked projects with last-active date and intention
+
+**Project status:**
+> "project status for [X]" / "how is project [X] going" / "status of [project]"
+→ Call `project_status(project="[slug]")`
+→ Show: current trajectory, recent insights, open watch_for items
+
+**Bootstrap from existing notes:**
+> "scan my notes" / "bootstrap from [path]" / "import existing notes from [path]"
+→ Call `bootstrap_scan(path="[path]")` first to preview what will be imported
+→ Then call `bootstrap_import(path="[path]")` to commit the import
+→ Confirm: files imported and project slugs created
 
 ---
 
@@ -72,6 +92,10 @@ If you don't have MCP available, use the `ar` CLI instead:
 | `session_end` | `ar saveall` | Batch-saves all today's sessions; or `ar write "<summary>"` for manual entry |
 | `check` | *(no CLI equivalent)* | MCP only — correction tracking via hook-correction hook |
 | `digest` | `ar digest recall "<query>"` | Also: `ar digest store`, `ar digest list`. MCP preferred for atomic store+retrieve |
+| `project_board` | `ar projects` | Partial equivalent — lists project slugs but less detail than MCP |
+| `project_status` | *(no CLI equivalent)* | MCP only — returns structured status with trajectory + insights |
+| `bootstrap_scan` | `ar bootstrap` | Preview scan of notes at the given path |
+| `bootstrap_import` | `ar bootstrap --import` | Commit the import after scanning |
 
 > Note: `ar remember` does not exist. Use `ar write` for freeform notes or `ar capture` for Q&A pairs.
 

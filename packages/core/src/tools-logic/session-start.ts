@@ -46,6 +46,7 @@ export interface SessionStartResult {
     last_trajectory: string | null;
     sessions_count: number;
   } | null;
+  empty_state?: string;
 }
 
 export async function sessionStart(input: SessionStartInput): Promise<SessionStartResult> {
@@ -102,7 +103,7 @@ export async function sessionStart(input: SessionStartInput): Promise<SessionSta
 
   // 4. Cross-project insights matching current context
   const context = input.context ?? slug;
-  const matched = recallInsights(context, 5);
+  const matched = recallInsights(context, 5, slug);
   const cross_project = matched.map((i) => ({
     title: sliceAtWord(i.title, 100),
     from_project: (i.projects?.[0] ?? (i.source ?? "unknown").replace(/\s+\d{4}-\d{2}-\d{2}.*$/, "")).slice(0, 30),
@@ -197,6 +198,14 @@ export async function sessionStart(input: SessionStartInput): Promise<SessionSta
     };
   }
 
+  // 9. Empty state detection — guide first-time agents on THIS project
+  // Uses project-scoped signals only: no journals, no corrections, no resume
+  // cross_project and insights are global — a returning user always has those
+  const isEmpty = !resume &&
+    corrections.length === 0 &&
+    !todayBrief && !yesterdayBrief &&
+    olderCount === 0;
+
   return {
     project: slug,
     identity,
@@ -207,5 +216,6 @@ export async function sessionStart(input: SessionStartInput): Promise<SessionSta
     watch_for,
     corrections,
     resume,
+    empty_state: isEmpty ? "No memory found for this project. Try: bootstrap_scan() to import existing projects, or start working and use remember() to save decisions." : undefined,
   };
 }

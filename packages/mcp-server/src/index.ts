@@ -76,6 +76,7 @@ All data stays local. No cloud, no telemetry.
 if (args.includes("--list-tools")) {
   const tools = [
     { name: "project_board", description: "Status board across all projects — run this first, before session_start" },
+    { name: "project_status", description: "Quick project health check — trajectory, blockers, room freshness" },
     { name: "session_start", description: "Load project context for a new session" },
     { name: "remember", description: "Save a memory — auto-routes to the right store" },
     { name: "recall", description: "Search all memory stores, return ranked results" },

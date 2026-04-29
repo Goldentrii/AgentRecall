@@ -240,3 +240,7 @@ export {
   type ImportSelection,
   type ImportResult,
 } from "./tools-logic/bootstrap.js";
+
+// Supabase — config
+export { readSupabaseConfig, writeSupabaseConfig } from "./supabase/config.js";
+export type { SupabaseConfig } from "./supabase/config.js";

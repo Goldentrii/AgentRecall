@@ -259,3 +259,6 @@ export type { ParsedMemoryFile } from "./supabase/sync.js";
 // RecallBackend
 export { LocalRecallBackend, getRecallBackend, resetRecallBackend } from "./tools-logic/recall-backend.js";
 export type { RecallBackend } from "./tools-logic/recall-backend.js";
+
+// Supabase — recall backend
+export { SupabaseRecallBackend } from "./supabase/recall-backend.js";

@@ -12,6 +12,7 @@ import { digestDir, digestGlobalDir } from "../storage/paths.js";
 import { ensureDir, readJsonSafe, writeJsonAtomic } from "../storage/fs-utils.js";
 import { withLock } from "../storage/filelock.js";
 import { extractKeywords } from "../helpers/auto-name.js";
+import { syncToSupabase } from "../supabase/sync.js";
 import {
   type DigestEntry,
   type DigestIndex,
@@ -124,7 +125,10 @@ export function createDigest(input: DigestStoreInput): DigestStoreResult {
     }
 
     // Write content file first — orphaned .md is harmless, dangling index entry is not
-    fs.writeFileSync(contentPath(dir, id), input.content, "utf-8");
+    const digestFilePath = contentPath(dir, id);
+    fs.writeFileSync(digestFilePath, input.content, "utf-8");
+    // Async sync to Supabase (non-blocking)
+    syncToSupabase(digestFilePath, input.content, project, "digest");
     index.entries.push(entry);
     writeIndex(dir, index);
 
@@ -304,7 +308,10 @@ function refreshDigestInternal(
   existing.expires = computeExpiry(callerTtl);
 
   // Write content first — safer ordering
-  fs.writeFileSync(contentPath(dir, existing.id), newContent, "utf-8");
+  const refreshedFilePath = contentPath(dir, existing.id);
+  fs.writeFileSync(refreshedFilePath, newContent, "utf-8");
+  // Async sync to Supabase (non-blocking)
+  syncToSupabase(refreshedFilePath, newContent, existing.project, "digest");
   writeIndex(dir, index);
 
   return {

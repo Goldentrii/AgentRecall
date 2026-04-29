@@ -212,7 +212,14 @@ function processFeedback(feedback: RecallFeedback[], query: string): FeedbackEnt
   const log = readFeedbackLog();
   const date = new Date().toISOString().slice(0, 10);
   for (const f of feedback) {
-    log.push({ query, id: f.id, title: f.title ?? "", useful: f.useful, date });
+    // Only deduplicate when a stable ID is present. Without an ID there's no
+    // reliable key, so always log the entry (allows accumulation across calls).
+    const isDuplicate = f.id
+      ? log.some((existing) => existing.query === query && existing.id === f.id && existing.date === date)
+      : false;
+    if (!isDuplicate) {
+      log.push({ query, id: f.id, title: f.title ?? "", useful: f.useful, date });
+    }
   }
   const updated = log.slice(-1000);
   fs.writeFileSync(feedbackLogPath(), JSON.stringify(updated, null, 2), "utf-8");
@@ -270,14 +277,20 @@ function applyRRF(
 // Main
 // ---------------------------------------------------------------------------
 
-export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallResult> {
-  // Process feedback first; reuse the returned log to avoid a second disk read
-  const feedbackLog = (input.feedback && input.feedback.length > 0)
-    ? processFeedback(input.feedback, input.query)
-    : readFeedbackLog();
-
-  const limit = input.limit ?? 10;
-  const queryWords = expandQuery(input.query.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
+/**
+ * localRecallSearch — the core local search logic (palace + journal + insight).
+ * Performs three parallel searches, scores internally, merges via RRF,
+ * applies hot-window recency boost, and deduplicates.
+ *
+ * Called by LocalRecallBackend.search() in recall-backend.ts.
+ * Feedback multiplier is NOT applied here — that is done in smartRecall()
+ * so it applies uniformly across all backends.
+ */
+export async function localRecallSearch(
+  query: string,
+  project: string | undefined,
+  limit: number
+): Promise<SmartRecallResultItem[]> {
   const sourcesQueried: string[] = [];
 
   // Candidate buckets — each source scores its items internally, then RRF merges
@@ -290,7 +303,7 @@ export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallR
   // Ebbinghaus decay is minimal for palace (S=9999); salience already
   // incorporates access recency via recordAccess().
   try {
-    const palaceResults = await palaceSearch({ query: input.query, project: input.project, limit: limit * 2 });
+    const palaceResults = await palaceSearch({ query, project, limit: limit * 2 });
     sourcesQueried.push("palace");
 
     for (const r of palaceResults.results) {
@@ -299,7 +312,7 @@ export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallR
       // keyword_score comes from updated palace-search (keyword overlap, not substring).
       // salience floor of 0.4 prevents new rooms (salience=0.5) from being unfairly
       // penalized against rooms with years of access history.
-      const keyScore = r.keyword_score ?? keywordExactness(input.query, r.excerpt);
+      const keyScore = r.keyword_score ?? keywordExactness(query, r.excerpt);
       const salience = Math.max(0.4, r.salience);
       const internalScore = keyScore * 0.65 + salience * 0.35;
 
@@ -328,8 +341,8 @@ export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallR
   // Journal is ephemeral — recent entries are useful; old ones rarely are.
   try {
     const journalResults = await journalSearch({
-      query: input.query,
-      project: input.project,
+      query,
+      project,
       include_palace: false,
       limit: Math.ceil(limit * 1.5),
     });
@@ -340,7 +353,7 @@ export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallR
       const id = stableId("journal", title);
       const days = daysSince(r.date);
       const recency = ebbinghaus(days, EBBINGHAUS_S.journal);
-      const exactness = keywordExactness(input.query, r.excerpt);
+      const exactness = keywordExactness(query, r.excerpt);
       // Equal weight: if the entry is recent AND relevant it scores well.
       // Old journal entries drop fast due to S=2.
       const internalScore = recency * 0.50 + exactness * 0.50;
@@ -363,7 +376,7 @@ export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallR
   // not recency. More confirmations = more reliable.
   try {
     const insightResults = await recallInsight({
-      context: input.query,
+      context: query,
       limit: limit * 2,
       include_awareness: false,
     });
@@ -374,7 +387,7 @@ export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallR
     for (const i of insightResults.matching_insights) {
       const id = stableId("insight", i.title);
       const relevance = i.relevance / maxRelevance;
-      const exactness = keywordExactness(input.query, i.title);
+      const exactness = keywordExactness(query, i.title);
       // log2(confirmed+1)/3 gives: 0→0, 1→0.33, 3→0.67, 7→1.0
       const confirmation = Math.min(1.0, Math.log2(i.confirmed + 1) / 3);
       const internalScore = relevance * 0.40 + exactness * 0.35 + confirmation * 0.25;
@@ -424,23 +437,7 @@ export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallR
     }
   }
 
-  // ── 5. Apply Beta feedback multiplier ────────────────────────────────────
-  // betaUtility returns [0,1]; ×2 normalizes so neutral (0.5) = ×1.0.
-  // Items with positive history are boosted; negative history suppressed.
-  for (const entry of rrfMap.values()) {
-    const { positives, negatives } = getFeedbackCounts(
-      entry.item.id,
-      entry.item.title,
-      queryWords,
-      feedbackLog
-    );
-    if (positives > 0 || negatives > 0) {
-      const multiplier = betaUtility(positives, negatives) * 2;
-      entry.score *= multiplier;
-    }
-  }
-
-  // ── 6. Deduplicate by excerpt content ────────────────────────────────────
+  // ── 5. Deduplicate by excerpt content ────────────────────────────────────
   const seen = new Set<string>();
   const deduped: SmartRecallResultItem[] = [];
   for (const { score, item } of rrfMap.values()) {
@@ -450,16 +447,45 @@ export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallR
     deduped.push({ ...item, score, confidence: scoreLabel(score) });
   }
 
-  // ── 7. Final sort and return ──────────────────────────────────────────────
+  // ── 6. Final sort ─────────────────────────────────────────────────────────
   deduped.sort((a, b) => b.score - a.score);
 
-  // total_searched = candidate items actually scanned (consistent metric)
-  const totalSearched = palaceItems.length + journalItems.length + insightItems.length;
+  return deduped;
+}
+
+export async function smartRecall(input: SmartRecallInput): Promise<SmartRecallResult> {
+  // Process feedback first; reuse the returned log to avoid a second disk read
+  const feedbackLog = (input.feedback && input.feedback.length > 0)
+    ? processFeedback(input.feedback, input.query)
+    : readFeedbackLog();
+
+  const limit = input.limit ?? 10;
+  const queryWords = expandQuery(input.query.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
+
+  // Use configured backend (Supabase or Local)
+  const { getRecallBackend } = await import("./recall-backend.js");
+  const backend = await getRecallBackend();
+  const results = await backend.search(input.query, input.project, limit);
+
+  // ── Apply Beta feedback multiplier (shared across all backends) ──────────
+  // betaUtility returns [0,1]; ×2 normalizes so neutral (0.5) = ×1.0.
+  // Items with positive history are boosted; negative history suppressed.
+  for (const item of results) {
+    const { positives, negatives } = getFeedbackCounts(item.id, item.title, queryWords, feedbackLog);
+    if (positives > 0 || negatives > 0) {
+      const multiplier = betaUtility(positives, negatives) * 2;
+      item.score *= multiplier;
+      item.confidence = scoreLabel(item.score);
+    }
+  }
+
+  // Re-sort after feedback adjustment
+  results.sort((a, b) => b.score - a.score);
 
   return {
     query: input.query,
-    results: deduped.slice(0, limit),
-    total_searched: totalSearched,
-    sources_queried: sourcesQueried,
+    results: results.slice(0, limit),
+    total_searched: results.length,
+    sources_queried: [...new Set(results.map((r) => r.source))],
   };
 }

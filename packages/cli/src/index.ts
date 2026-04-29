@@ -104,6 +104,9 @@ HOOKS (auto-fired by Claude Code hooks — no agent discipline needed):
 DIAGNOSTICS:
   ar stats             Show memory system health: corrections, feedback, insights, graph edges
 
+SETUP:
+  ar setup supabase              — Configure Supabase for semantic recall
+
 GLOBAL FLAGS:
   --root <path>     Storage root (default: ~/.agent-recall)
   --project <slug>  Project override
@@ -1405,6 +1408,40 @@ ${correctionCount === 0 ? "\n  Warning: No corrections captured yet. Use the too
         } else {
           output(`  All discovered projects are already in AgentRecall.`);
         }
+      }
+      break;
+    }
+
+    case "setup": {
+      if (rest[0] === "supabase") {
+        const readline = await import("node:readline");
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        const ask = (q: string): Promise<string> => new Promise((resolve) => rl.question(q, resolve));
+
+        output("AgentRecall Supabase Setup\n");
+
+        const url = await ask("Supabase URL (https://xxx.supabase.co): ");
+        const key = await ask("Supabase anon key: ");
+        const embeddingProvider = (await ask("Embedding provider (openai/voyage) [openai]: ")).trim() || "openai";
+        const embeddingKey = await ask(`${embeddingProvider === "voyage" ? "Voyage" : "OpenAI"} API key: `);
+
+        rl.close();
+
+        const { writeSupabaseConfig } = await import("agent-recall-core");
+        writeSupabaseConfig({
+          supabase_url: url.trim(),
+          supabase_anon_key: key.trim(),
+          embedding_provider: embeddingProvider as "openai" | "voyage",
+          embedding_api_key: embeddingKey.trim(),
+          sync_enabled: true,
+        });
+
+        output("\nConfig saved to ~/.agent-recall/config.json");
+        output("Run migration.sql in your Supabase SQL editor to create tables.");
+        output("Backfill will start automatically on next session_start.\n");
+      } else {
+        process.stderr.write(`Unknown setup subcommand: ${rest[0] ?? "(none)"}\nUsage: ar setup supabase\n`);
+        process.exit(1);
       }
       break;
     }

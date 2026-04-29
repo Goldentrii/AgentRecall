@@ -240,3 +240,25 @@ export {
   type ImportSelection,
   type ImportResult,
 } from "./tools-logic/bootstrap.js";
+
+// Supabase — config
+export { readSupabaseConfig, writeSupabaseConfig } from "./supabase/config.js";
+export type { SupabaseConfig } from "./supabase/config.js";
+
+// Supabase — client
+export { getSupabaseClient, resetSupabaseClient } from "./supabase/client.js";
+
+// Supabase — embedding
+export { OpenAIEmbedding, VoyageEmbedding, zeroPad, createEmbeddingProvider } from "./supabase/embedding.js";
+export type { EmbeddingProvider } from "./supabase/embedding.js";
+
+// Supabase — sync
+export { syncToSupabase, backfill, contentHash, parseMemoryFile, deriveSlug } from "./supabase/sync.js";
+export type { ParsedMemoryFile } from "./supabase/sync.js";
+
+// RecallBackend
+export { LocalRecallBackend, getRecallBackend, resetRecallBackend } from "./tools-logic/recall-backend.js";
+export type { RecallBackend } from "./tools-logic/recall-backend.js";
+
+// Supabase — recall backend
+export { SupabaseRecallBackend } from "./supabase/recall-backend.js";

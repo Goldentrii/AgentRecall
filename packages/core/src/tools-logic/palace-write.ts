@@ -10,6 +10,7 @@ import { generateFrontmatter } from "../palace/obsidian.js";
 import type { Importance } from "../types.js";
 import { appendToLog } from "../palace/log.js";
 import { generateSlug } from "../helpers/auto-name.js";
+import { syncToSupabase } from "../supabase/sync.js";
 
 export interface PalaceWriteInput {
   room: string;
@@ -86,6 +87,10 @@ export async function palaceWrite(input: PalaceWriteInput): Promise<PalaceWriteR
   }
 
   updateRoomMeta(slug, input.room, { updated: timestamp });
+
+  // Async sync to Supabase (non-blocking)
+  const writtenContent = fs.readFileSync(targetFile, "utf-8");
+  syncToSupabase(targetFile, writtenContent, slug, "palace", input.room);
 
   const fanOutResult = fanOut(slug, input.room, targetTopic, input.content, input.connections ?? [], importance);
   updatePalaceIndex(slug);

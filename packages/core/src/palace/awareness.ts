@@ -7,7 +7,7 @@
  *
  * Structure:
  *   ## Identity (5 lines)         — who is the user, what matters
- *   ## Top Insights (10 items)    — ranked by relevance + confirmation count
+ *   ## Top Insights (20 items)    — ranked by relevance + confirmation count
  *   ## Compound Insights (5 max)  — patterns spanning 3+ individual insights
  *   ## Trajectory (3 lines)       — where is the work heading
  *   ## Blind Spots (3 lines)      — what the system suspects matters but hasn't confirmed
@@ -21,6 +21,7 @@ import { getRoot } from "../types.js";
 import { ensureDir } from "../storage/fs-utils.js";
 import { extractKeywords } from "../helpers/auto-name.js";
 import { withLock } from "../storage/filelock.js";
+import { syncToSupabase } from "../supabase/sync.js";
 
 const MAX_LINES = 200;
 
@@ -54,8 +55,12 @@ export function writeAwareness(content: string): void {
       }
       const truncated = lines.slice(0, cutAt).join("\n");
       fs.writeFileSync(p, truncated + "\n", "utf-8");
+      // Async sync to Supabase (non-blocking)
+      syncToSupabase(p, fs.readFileSync(p, "utf-8"), "global", "awareness");
     } else {
       fs.writeFileSync(p, content, "utf-8");
+      // Async sync to Supabase (non-blocking)
+      syncToSupabase(p, fs.readFileSync(p, "utf-8"), "global", "awareness");
     }
   });
 }
@@ -193,7 +198,7 @@ export function initAwareness(identity: string): AwarenessState {
 /**
  * Add or merge an insight into the awareness state.
  * If similar insight exists (by title keyword overlap), merge and strengthen.
- * If new, add and demote lowest if over 10.
+ * If new, add and demote lowest if over 20.
  */
 export function addInsight(
   newInsight: Omit<Insight, "id" | "confirmations" | "lastConfirmed">
@@ -223,7 +228,7 @@ export function addInsight(
     resurrected.lastConfirmed = now;
     if (!resurrected.evidence.includes(newInsight.evidence.slice(0, 40))) {
       const merged = `${resurrected.evidence} | ${newInsight.evidence}`;
-      resurrected.evidence = merged.length > 500 ? merged.slice(0, 500) : merged;
+      resurrected.evidence = merged.length > 1500 ? merged.slice(0, 1500) : merged;
     }
     for (const aw of newInsight.appliesWhen) {
       if (!resurrected.appliesWhen.includes(aw)) {
@@ -231,8 +236,8 @@ export function addInsight(
       }
     }
     state.topInsights.push(resurrected);
-    // Enforce 15-item cap — demote lowest if over limit
-    if (state.topInsights.length > 15) {
+    // Enforce 20-item cap — demote lowest if over limit
+    if (state.topInsights.length > 20) {
       state.topInsights.sort((a, b) => b.confirmations - a.confirmations);
       const demoted = state.topInsights.pop()!;
       archiveInsight(demoted);
@@ -266,7 +271,7 @@ export function addInsight(
       // Only append evidence if it's not already present (prevents "evidence | evidence")
       if (!existing.evidence.includes(newInsight.evidence.slice(0, 40))) {
         const merged = `${existing.evidence} | ${newInsight.evidence}`;
-        existing.evidence = merged.length > 500 ? merged.slice(0, 500) : merged;
+        existing.evidence = merged.length > 1500 ? merged.slice(0, 1500) : merged;
       }
       for (const aw of newInsight.appliesWhen) {
         if (!existing.appliesWhen.includes(aw)) {
@@ -290,7 +295,7 @@ export function addInsight(
       existing.lastConfirmed = now;
       if (!existing.evidence.includes(newInsight.evidence.slice(0, 40))) {
         const merged = `${existing.evidence} | ${newInsight.evidence}`;
-        existing.evidence = merged.length > 500 ? merged.slice(0, 500) : merged;
+        existing.evidence = merged.length > 1500 ? merged.slice(0, 1500) : merged;
       }
       for (const aw of newInsight.appliesWhen) {
         if (!existing.appliesWhen.includes(aw)) {
@@ -317,14 +322,14 @@ export function addInsight(
     severity: (newInsight as { severity?: "critical" | "important" | "minor" }).severity,
   };
 
-  if (state.topInsights.length < 15) {
+  if (state.topInsights.length < 20) {
     state.topInsights.push(insight);
     writeAwarenessState(state);
     renderAwareness(state);
     return { action: "added", insight };
   }
 
-  // Over 15: demote lowest-confirmation insight to archive (not deleted)
+  // Over 20: demote lowest-confirmation insight to archive (not deleted)
   state.topInsights.sort((a, b) => b.confirmations - a.confirmations);
   const demoted = state.topInsights.pop()!;
   archiveInsight(demoted);
@@ -400,7 +405,7 @@ export function renderAwareness(state: AwarenessState): void {
   const sorted = [...state.topInsights].sort((a, b) => b.confirmations - a.confirmations);
   for (const insight of sorted) {
     lines.push(`### ${insight.title} (${insight.confirmations}x confirmed)`);
-    lines.push(`- Evidence: ${insight.evidence.slice(0, 350)}`);
+    lines.push(`- Evidence: ${insight.evidence.slice(0, 600)}`);
     lines.push(`- Applies when: ${insight.appliesWhen.join(", ")}`);
     lines.push(`- Source: ${insight.source} | Last: ${insight.lastConfirmed.slice(0, 10)}`);
     lines.push("");

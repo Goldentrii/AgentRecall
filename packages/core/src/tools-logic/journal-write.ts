@@ -10,6 +10,7 @@ import { fanOut } from "../palace/fan-out.js";
 import { generateFrontmatter } from "../palace/obsidian.js";
 import { updatePalaceIndex } from "../palace/index-manager.js";
 import { journalFileName, type SaveType } from "../storage/session.js";
+import { syncToSupabase } from "../supabase/sync.js";
 
 export interface JournalWriteInput {
   content: string;
@@ -86,6 +87,9 @@ export async function journalWrite(input: JournalWriteInput): Promise<JournalWri
 
     palaceResult = { room: input.palace_room, topic: topicFile, fan_out: fanOutResult.updatedRooms };
   }
+
+  // Async sync to Supabase (non-blocking)
+  syncToSupabase(filePath, updated, slug, "journal");
 
   return { success: true, date, file: filePath, palace: palaceResult };
 }

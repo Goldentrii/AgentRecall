@@ -1,4 +1,4 @@
-# Upgrade Guide: v3.3.0
+# Upgrade Guide: v3.4.0
 
 ## What's New
 
@@ -31,7 +31,7 @@ Four new tools added to the MCP server:
 
 A new `decisions` room is now included in the default palace: `DEFAULT_PALACE_ROOMS`. Tracks decision trails with prior/posterior tracking, evidence chains, and outcomes. Bayesian-inspired audit trail for major decisions.
 
-Projects created before v3.3.0 will have the `decisions` room auto-created on next palace initialization.
+Projects created before v3.4.0 will have the `decisions` room auto-created on next palace initialization.
 
 ### Awareness Cap Updated
 
@@ -39,14 +39,14 @@ Awareness insight cap increased from 15 to 20. Existing awareness files are unaf
 
 ## Migration
 
-No breaking changes. All existing data, palace rooms, journals, and awareness files are compatible with v3.3.0.
+No breaking changes. All existing data, palace rooms, journals, and awareness files are compatible with v3.4.0.
 
 If you use the Supabase backend, run `ar setup supabase --backfill` to embed existing memories.
 
 ## Package Versions
 
-All packages updated to `3.3.0`:
-- `agent-recall-mcp@3.3.0`
-- `agent-recall-sdk@3.3.0`
-- `agent-recall-cli@3.3.0`
-- `agent-recall-core@3.3.0`
+All packages updated to `3.4.0`:
+- `agent-recall-mcp@3.4.0`
+- `agent-recall-sdk@3.4.0`
+- `agent-recall-cli@3.4.0`
+- `agent-recall-core@3.4.0`

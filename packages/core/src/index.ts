@@ -251,3 +251,7 @@ export { getSupabaseClient, resetSupabaseClient } from "./supabase/client.js";
 // Supabase — embedding
 export { OpenAIEmbedding, VoyageEmbedding, zeroPad, createEmbeddingProvider } from "./supabase/embedding.js";
 export type { EmbeddingProvider } from "./supabase/embedding.js";
+
+// Supabase — sync
+export { syncToSupabase, backfill, contentHash, parseMemoryFile, deriveSlug } from "./supabase/sync.js";
+export type { ParsedMemoryFile } from "./supabase/sync.js";

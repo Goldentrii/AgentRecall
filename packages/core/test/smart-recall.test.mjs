@@ -108,3 +108,20 @@ describe("Smart recall — ambient dedup logic", () => {
     assert.equal(filtered[1].id, "d");
   });
 });
+
+describe("RecallBackend selection", () => {
+  it("uses LocalRecallBackend when no Supabase config", async () => {
+    const { setRoot, resetRoot } = await import("agent-recall-core");
+    const { getRecallBackend, LocalRecallBackend, resetRecallBackend } = await import("agent-recall-core");
+    const tmpDir = (await import("node:fs")).mkdtempSync(
+      (await import("node:path")).join((await import("node:os")).tmpdir(), "ar-sel-")
+    );
+    setRoot(tmpDir);
+    resetRecallBackend();
+    const backend = await getRecallBackend();
+    assert.ok(backend instanceof LocalRecallBackend);
+    (await import("node:fs")).rmSync(tmpDir, { recursive: true, force: true });
+    resetRoot();
+    resetRecallBackend();
+  });
+});

@@ -244,3 +244,7 @@ export {
 // Supabase — config
 export { readSupabaseConfig, writeSupabaseConfig } from "./supabase/config.js";
 export type { SupabaseConfig } from "./supabase/config.js";
+
+// Supabase — embedding
+export { OpenAIEmbedding, VoyageEmbedding, zeroPad, createEmbeddingProvider } from "./supabase/embedding.js";
+export type { EmbeddingProvider } from "./supabase/embedding.js";

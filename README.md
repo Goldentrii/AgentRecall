@@ -411,10 +411,10 @@ ar search "rate limiting" --include-palace
 
 ---
 
-## Semantic Recall — pgvector Backend (v3.4.0)
+## Semantic Recall — pgvector Backend (v3.3.0)
 
 > [!NOTE]
-> **New in v3.4.0.** Default keyword recall works without any configuration. Upgrade to Supabase + pgvector when keyword search hits its ceiling: synonyms, paraphrased queries, multi-language recall.
+> **New in v3.3.0.** Default keyword recall works without any configuration. Upgrade to Supabase + pgvector when keyword search hits its ceiling: synonyms, paraphrased queries, multi-language recall.
 
 Keyword search matches tokens. Semantic search matches **meaning**. After upgrading:
 - `recall("session expiry")` also surfaces entries about "token refresh" and "auth timeout"
@@ -648,7 +648,7 @@ const ar = new AgentRecall({ project: "my-project" });
 The `agent-recall-cli` package provides the `ar` command for terminal workflows and CI pipelines.
 
 ```
-ar v3.4.0 — AgentRecall CLI
+ar v3.3.0 — AgentRecall CLI
 
 JOURNAL:
   ar read [--date YYYY-MM-DD] [--section <name>]
@@ -813,7 +813,7 @@ All benchmark code: [`benchmark/run.mjs`](benchmark/run.mjs), [`benchmark/ab-com
 | [Scoring Design Rationale](docs/SCORING.md) | Why the scoring system works this way — RRF, Ebbinghaus, Beta distribution, and the bugs they fix |
 | [MCP Adapter Spec](docs/mcp-adapter-spec.md) | Technical spec for building adapters on top of AgentRecall |
 | [SDK Design](docs/sdk-design.md) | Design doc for the SDK architecture |
-| [Upgrade v3.4](UPGRADE-v3.4.md) | Changelog: semantic recall, pgvector backend, 10 MCP tools, bootstrap, palace decisions room |
+| [Upgrade v3.3](UPGRADE-v3.3.md) | Changelog: semantic recall, pgvector backend, 10 MCP tools, bootstrap, palace decisions room |
 | [MCP Server README](packages/mcp-server/README.md) | Focused guide for Claude Code / Cursor / Windsurf users |
 | [Core SDK README](packages/core/README.md) | SDK API reference for building with AgentRecall programmatically |
 
@@ -945,10 +945,10 @@ curl -o ~/.claude/skills/agent-recall/SKILL.md \
 
 ---
 
-## 语义召回 — pgvector (v3.4.0)
+## 语义召回 — pgvector (v3.3.0)
 
 > [!NOTE]
-> **v3.4.0 新功能。** 默认关键词召回无需任何配置。当关键词搜索遇到天花板时——同义词、改写查询、多语言——升级到 Supabase pgvector 后端。
+> **v3.3.0 新功能。** 默认关键词召回无需任何配置。当关键词搜索遇到天花板时——同义词、改写查询、多语言——升级到 Supabase pgvector 后端。
 
 关键词搜索匹配词汇，语义搜索匹配**含义**。升级后：`recall("会话过期")` 也能找到"token 刷新"和"认证超时"相关的条目，无需手动添加同义词。
 
@@ -1120,7 +1120,7 @@ L5: 洞察索引     recall_insight            「跨项目的经验」
 | **[→ 命令参考](docs/commands.md)** | **`/arstatus`、`/arstart`、`/arsave`、`/arsaveall` 完整指南** |
 | [智能距离协议](docs/intelligent-distance-protocol.md) | 基础理论 — 人类与 AI 之间的差距是结构性的，如何减少信息损失 |
 | [评分设计原理](docs/SCORING.md) | RRF、艾宾浩斯、Beta 分布及其修复的 bug |
-| [v3.4 升级说明](UPGRADE-v3.4.md) | 语义召回、pgvector、10 工具、bootstrap、decisions 房间 |
+| [v3.3 升级说明](UPGRADE-v3.3.md) | 语义召回、pgvector、10 工具、bootstrap、decisions 房间 |
 
 ---
 

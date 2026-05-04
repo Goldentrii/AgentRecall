@@ -69,6 +69,7 @@ WRITE PATH GUIDE:
 AWARENESS:
   ar awareness read
   ar awareness update --insight "title" --evidence "ev" --applies-when kw1,kw2
+  ar awareness rollup [--threshold N]
 
 INSIGHT:
   ar insight <context> [--limit N]
@@ -348,6 +349,25 @@ async function main(): Promise<void> {
           trajectory: getFlag("--trajectory", rest),
         });
         output(result);
+      } else if (sub === "rollup") {
+        const thresholdStr = getFlag("--threshold", rest);
+        const threshold = thresholdStr ? parseInt(thresholdStr, 10) : 3;
+        try {
+          const { promoted, skipped } = core.promoteConfirmedInsights(threshold);
+          if (promoted.length === 0) {
+            process.stdout.write(`No new insights to promote (threshold: ${threshold}).\n`);
+          } else {
+            process.stdout.write(`Promoted ${promoted.length} insight(s) to awareness:\n`);
+            for (const title of promoted) {
+              process.stdout.write(`  \u2022 ${title}\n`);
+            }
+            process.stdout.write(`Skipped ${skipped.length} (already in awareness or below threshold).\n`);
+          }
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
+          process.stderr.write(`Error: ${message}\n`);
+          process.exit(1);
+        }
       } else {
         process.stderr.write(`Unknown awareness subcommand: ${sub}\n`);
         process.exit(1);
